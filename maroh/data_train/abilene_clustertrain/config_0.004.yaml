@@ -1,0 +1,67 @@
+hash_function: dte_stand.hash_function.RandomHashFunction2
+algorithm: dte_stand.algorithm.Mate2LAlgorithm
+path_calculator: dte_stand.paths.DAGCalculator
+phi: dte_stand.phi_calculator.PhiCalculator.calculate_max_util
+
+lsdb_period: 30000
+iterations: 1
+plot_period: 250
+
+log_path: ./experiment.log
+log_level: DEBUG
+
+split_flows: True
+
+retain_weights: False
+
+debug_check_cycles: 0
+
+store_hashweights: 0
+store_nexthops: 0
+
+alg_cfg:
+  actor_cfg:
+    mpnn_mode: '1'
+    memory_lookup: state
+    networks: '2222'
+    m4_loc_end: False
+
+    use_gat: False
+    use_memory: True
+    memory_type: 'cluster'
+    memory_size: 1024
+    threshold: 0.004
+    states_logging: True
+
+  horizons: 25
+  episodes: 1000
+  eval_period: 25000
+  change_sample_period: 1
+  gamma: 0.75
+  gae_lambda: 0.95
+  reward: phi
+  reward_computation: change
+  init_weights: random
+  min_weight: 1
+  max_weight: 5
+  greedy_epsilon: 0
+  message_iterations: 3
+  n_without_update: 0
+  batch_size: 128
+  random_sample: False
+  actions:
+    addition:
+      action: false
+      value: 1
+    subtraction:
+      action: false
+      value: 1
+    multiplication:
+      action: true
+      value: 1.25
+    division:
+      action: false
+      value: 1.25
+    zero:
+      action: true
+      value: 0

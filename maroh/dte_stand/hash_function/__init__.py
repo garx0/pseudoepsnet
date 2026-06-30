@@ -1,0 +1,5 @@
+from dte_stand.hash_function.dummy import DummyHashFunction
+from dte_stand.hash_function.dxhash import WeightedDxHashFunction
+from dte_stand.hash_function.dxhash_changed import WeightedDxHashChangedFunction
+from dte_stand.hash_function.random import RandomHashFunction
+from dte_stand.hash_function.random2 import RandomHashFunction2

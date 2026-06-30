@@ -1,0 +1,16 @@
+*.pyc
+experiment.log
+.idea/
+dte_stand/algorithm/mate/checkpoints/
+dte_stand/algorithm/mate/logs/
+# exclude result folders
+data_examples/*/*-*-*,*-*-*_*
+!.gitignore
+data_train/*/exp*
+models/
+.vscode/
+memory_plots/
+genetic_alg_input/
+generated_flows/
+data_train/cogentco/
+.ipynb_checkpoints/

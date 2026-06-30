@@ -1,0 +1,16 @@
+{
+    "paths": [
+        "results/epsilon_net_full_p0_train4_1000_20260526_135503",
+        "results/epsilon_net_full_p0.001_train4_1000_20260526_134243",
+        "results/epsilon_net_full_p0.01_train4_1000_20260526_112517",
+        "results/epsilon_net_full_p0.05_train4_1000_20260526_112528",
+        "results/epsilon_net_full_p0.1_train4_1000_20260526_112533",
+        "results/epsilon_net_full_p0.25_train4_1000_20260526_112537",
+        "results/epsilon_net_full_p0.5_train4_1000_20260526_005036",
+        "results/epsilon_net_full_p1_train4_1000_20260526_013621",
+        "results/epsilon_net_full_p2_train4_1000_20260526_112542",
+        "results/epsilon_net_full_p5_train4_1000_20260526_112547",
+        "results/kNN_full_p0.5_train4_1000_20260504_172910",
+        "results/centroids_full_p0.5_train4_1000_20260526_163304"
+    ]
+}

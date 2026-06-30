@@ -1,0 +1,56 @@
+{
+    "exp_dir_nomemory": "data_train/abilene_rec/exp_2026-05-04,18-36-29.807__non-sa",
+    "flows_solver_ecmp": "data_train/abilene_test/train/abilene",
+    "exp_dirs_names": [
+        ["data_train/abilene_test/exp_2026-05-26,15-21-43.882_p5_non-sa",
+        "PεN (p=5%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-23-26.514_p2_non-sa",
+        "PεN (p=2%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-24-35.406_p1_non-sa",
+        "PεN (p=1%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-10-36.739_p0.5_non-sa",
+        "PεN (p=0.5%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-11-35.061_p0.25_non-sa",
+        "PεN (p=0.25%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-12-31.075_p0.1_non-sa",
+        "PεN (p=0.1%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,14-58-26.190_p0.05_non-sa",
+        "PεN (p=0.05%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,14-58-19.552_p0.01_non-sa",
+        "PεN (p=0.01%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,14-58-14.186_p0.001_non-sa",
+        "PεN (p=0.001%)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-41-13.846_centroids0_non-sa",
+         "Centroids"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-41-18.208_centroids1_non-sa",
+         "Centroids (after 0th it.)"],
+
+        ["data_train/abilene_test/exp_2026-05-26,15-41-22.472_centroids2_non-sa",
+         "Centroids (after 1st it.)"],
+
+        ["data_train/abilene_test/exp_2026-05-20,19-26-59.044_knn0_non-sa",
+         "KNN"],
+
+        ["data_train/abilene_test/exp_2026-05-20,18-26-07.563_knn1_non-sa",
+         "KNN (after 0th it.)"],
+
+        ["data_train/abilene_test/exp_2026-05-20,17-19-19.335_knn2_non-sa",
+         "KNN (after 1st it.)"],
+
+        ["data_train/abilene_test/exp_2026-05-18,17-41-45.093_cluster0.003_non-sa",
+         "SAMAROH-2L (Δ=0.003)"],
+
+        ["data_train/abilene_test/exp_2026-05-20,23-07-20.665_cluster0.004_non-sa",
+         "SAMAROH-2L (Δ=0.004)"]
+    ]
+}

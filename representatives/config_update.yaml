@@ -1,0 +1,39 @@
+# Example config for full mode
+
+mode: "full"
+classifier: "epsilon_net" # "epsilon_net", "kNN", "centroids"
+data_path: "train4_1000"
+data_path_test: "test4"
+output_dir: "results"
+#saved_dists: "min_dists.npz"
+
+#agent: 7 # for "single" mode
+#iteration: 0 # for "single" mode
+
+metric: "euclidean" # "euclidean", "manhattan", "chebyshev", "cosine"
+searcher: "balltree" # "linear", "balltree"
+delta: 0.0
+theta: 0.0
+dist_percentile: 5
+use_acceleration: true
+
+train_ratio: 0.6
+max_test_points: 0 # 0 means to use all test points
+buffer_size: 100000
+seed: 42
+
+verbose: true
+save_plots: true
+save_pred: false
+save_reprs: false
+
+# Plot settings will be active in future releases
+plot_types:
+  - "heatmaps"
+  - "distributions"
+  - "time"
+  - "best_worst"
+
+plot_style:
+  dpi: 150
+  show_plots: false
