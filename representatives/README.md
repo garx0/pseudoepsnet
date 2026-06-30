@@ -4,6 +4,10 @@
 
 This project implements a classifier based on a pseudo ε-network for finding similar states in the MAROH multi-agent traffic flow balancing method. The system allows constructing a pseudo-ε network for training data compression, performing streaming classification, and visualizing the results.
 
+# Installation
+
+This project was tested on Python 3.11.3. Install libraries for Python using `requirements.txt` file.
+
 ## System Architecture
 
 The project has a modular structure with clear separation of responsibilities:
