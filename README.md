@@ -1,7 +1,7 @@
 # Reproducing Pseudo ε-Net experiments using SAMAROH method
 This instruction tells how to reproduce experiments from "Pseudo ε-Net Method with Delayed Decisions Based on Representatives and Anti-Representatives for Multi-Agent Stream Classification" paper.
 
-#### A. Experiments on Abilene topology
+### A. Experiments on Abilene topology
 
 #### 1. Go to `maroh` directory in the root of this repository
 
@@ -170,7 +170,7 @@ Run:
 
 This will reproduce **Table 7** in the paper.
 
-#### B. Experiments on Geant2009 topology
+### B. Experiments on Geant2009 topology
 
 The procedure is same as for Abilene topology (with difference in parameter values and directory paths), except that some experiments were not conducted on Geant2009 topology.
 
@@ -186,11 +186,11 @@ Use Abilene instructions with the following differences:
 
 * File copying procedure after running command in step 4 is the following:
 
-- Copy files from `flows0000.json` to `flows0499.json` to `data_train/geant2009_clustertrain/train/geant2009`.
+    * Copy files from `flows0000.json` to `flows0499.json` to `data_train/geant2009_clustertrain/train/geant2009`;
 
-- Copy files from `flows0500*` to `flows0999*` to `data_train/geant2009_test/train/geant2009` (including .npy and .npz files).
+    * Copy files from `flows0500*` to `flows0999*` to `data_train/geant2009_test/train/geant2009` (including .npy and .npz files);
 
-- Copy any `flows*.json` file to `data_train/geant2009_rec/test/geant2009`, `data_train/geant2009_test/test/geant2009`, `data_train/geant2009_clustertrain/test/geant2009`.
+    * Copy any `flows*.json` file to `data_train/geant2009_rec/test/geant2009`, `data_train/geant2009_test/test/geant2009`, `data_train/geant2009_clustertrain/test/geant2009`.
 
 * Geant2009 experiments used different values of PεN's distance percentile and SAMAROH-2L's Δ parameter, they can be found in the paper (or in config file names in `data_train/geant2009_test`, `data_train/geant2009_clustertrain`). For step 12, note that Geant2009 experiments used K=5 (number of message iterations).
 
