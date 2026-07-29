@@ -1,0 +1,18 @@
+# Comparison of already completed experiments
+comparison:
+  name: "Comparison"
+  output_dir: "./compare_results/comparison1"
+
+  # Experiments to compare
+  experiments:
+    - name: "Epsilon-Net (p=1%)"
+      path: "results/epsilon_net_full_p0.5_train4_1000_20260526_005036"
+
+    - name: "Epsilon-Net (p=0.5%)"
+      path: "results/epsilon_net_full_p1_train4_1000_20260526_013621"
+
+    - name: "KNN"
+      path: "results/kNN_full_p0.5_train4_1000_20260504_172910"
+
+    - name: "Centroids"
+      path: "results/centroids_full_p0.5_train4_1000_20260526_163304"

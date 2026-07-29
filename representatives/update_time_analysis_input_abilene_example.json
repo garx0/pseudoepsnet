@@ -1,0 +1,47 @@
+{
+    "n_agents": 20,
+    "n_iterations": 3,
+    "exp_dirs_names": [
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_012203",
+        "EpsilonNet (p=0.5%), buf=4"],
+
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_005947",
+        "EpsilonNet (p=0.5%), buf=8"],
+
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_010444",
+        "EpsilonNet (p=0.5%), buf=16"],
+
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_010659",
+        "EpsilonNet (p=0.5%), buf=32"],
+
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_010206",
+        "EpsilonNet (p=0.5%), buf=64"],
+
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_010910",
+        "EpsilonNet (p=0.5%), buf=128"],
+
+        ["results/updatetime/epsilon_net_full_p0.5_train4_1000_20260526_011114",
+        "EpsilonNet (p=0.5%), buf=256"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_014141",
+        "EpsilonNet (p=1%), buf=4"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_014341",
+        "EpsilonNet (p=1%), buf=8"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_014540",
+        "EpsilonNet (p=1%), buf=16"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_014738",
+        "EpsilonNet (p=1%), buf=32"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_014933",
+        "EpsilonNet (p=1%), buf=64"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_015124",
+        "EpsilonNet (p=1%), buf=128"],
+
+        ["results/updatetime/epsilon_net_full_p1_train4_1000_20260526_015312",
+        "EpsilonNet (p=1%), buf=256"]
+    ]
+}

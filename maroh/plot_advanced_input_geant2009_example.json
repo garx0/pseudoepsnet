@@ -1,0 +1,59 @@
+{
+    "exp_dir_nomemory": "data_train/geant2009_rec/exp_2026-07-25,17-20-49.738__non-sa",
+    "flows_solver_ecmp": "data_train/geant2009_test/train/geant2009",
+    "exp_dirs_names": [
+        ["data_train/geant2009_test/exp_2026-07-26,18-52-47.362_p10_non-sa",
+        "PεN (p=10%)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,12-55-40.620_p2_non-sa",
+        "PεN (p=2%)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-08-57.124_p0.5_non-sa",
+        "PεN (p=0.5%)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,12-56-15.839_p0.25_non-sa",
+        "PεN (p=0.25%)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,12-59-00.053_p0.1_non-sa",
+        "PεN (p=0.1%)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,13-05-55.647_p0.05_non-sa",
+        "PεN (p=0.05%)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-11-23.756_centroids0_non-sa",
+        "Centroids"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-11-33.213_centroids1_non-sa",
+        "Centroids (after 0th it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-49-01.364_centroids2_non-sa",
+        "Centroids (after 1st it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-54-48.518_centroids3_non-sa",
+        "Centroids (after 2nd it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,15-00-24.622_centroids4_non-sa",
+        "Centroids (after 3rd it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-11-17.624_knn0_non-sa",
+        "k-NN"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-11-28.367_knn1_non-sa",
+        "k-NN (after 0th it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-48-56.523_knn2_non-sa",
+        "k-NN (after 1st it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,14-49-07.382_knn3_non-sa",
+        "k-NN (after 2nd it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,15-00-18.980_knn4_non-sa",
+        "k-NN (after 3rd it.)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,18-53-50.525_clust0.015_non-sa",
+        "SAMAROH-2L (Δ=0.015)"],
+
+        ["data_train/geant2009_test/exp_2026-07-26,17-35-26.278_clust0.020_non-sa",
+        "SAMAROH-2L (Δ=0.02)"]
+    ]
+}
