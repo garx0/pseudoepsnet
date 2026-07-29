@@ -108,8 +108,6 @@ For each distance percentile value `<value>` in [0.001, 0.01, 0.05, 0.1, 0.25, 0
 
 (where `_p<value>` string denotes postfix of existing `config_p<value>.yaml` file in `data_train/abilene_test`).
 
-For convenience, you can specify `-n pen<value>` argument, to include algorithm name and parameter value in experiment results directory name.
-
 Note that in `python main.py <train_dir> -t -c <name> ...` commands, `-c` argument does not specify any parameter directly, but rather specifies the `<train_dir>/config<name>.yaml` configuration file to be loaded, therefore that file should exist beforehand. To run experiments on parameter values outside the paper's experimental research scope, modify contents of an existing configuration file (where all parameter values are specified).
 
 #### 12. Test a two-layer method with SAMAROH model and k-NN or Centroids classifier as the experience layer
@@ -122,8 +120,6 @@ For k-NN and Centroids activating on all iterations (`<value>` = 0) or after i-t
 
 These experiments will use training data from path `../representatives/train_abilene` relative to `maroh` directory root, so make sure that `maroh` and `representatives` directories are located in same directory.
 
-For convenience, you can specify `-n knn<value>` or `-n centroids<value>` argument, to include algorithm name and parameter value in experiment results directory name.
-
 #### 13. Prepare experience layer for testing SAMAROH-2L method (with clustering)
 
 For each Δ value `<value>` in [0.003, 0.004], run:
@@ -132,15 +128,11 @@ For each Δ value `<value>` in [0.003, 0.004], run:
 
 Result for each `<value>` will appear in new directory `data_train/abilene_clustertrain/<name4_value>`. Representatives will be saved in `data_train/abilene_clustertrain/<name4_value>/results/model/memory.npz`
 
-For convenience, you can specify `-n cluster<value>` argument, to include algorithm name and parameter value in experiment results directory name.
-
 #### 14. Test SAMAROH-2L method
 
 For each Δ value `<value>` in [0.003, 0.004], run:
 
 `python main.py data_train/abilene_test -t -c _cluster_<value> --seed 123 -m data_train/abilene_train/model --memory data_train/abilene_clustertrain/<name4_value>/results/model/memory.npz`
-
-For convenience, you can specify `-n cluster<value>` argument, to include algorithm name and parameter value in experiment results directory name.
 
 #### 15. Make plot and tables of two-layer method experiments
     
