@@ -74,6 +74,3 @@ Plots (if save_plots is enabled):
 * distributions.png — distributions of accuracy, coverage, compression
 * time_analysis.png — execution time analysis
 * best_worst.png — best and worst results analysis
-
-### System Requirements
-* Python 3.8+
