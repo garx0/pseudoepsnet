@@ -150,7 +150,7 @@ Make `plot_advanced_input.json` file with paths to experiment results directorie
 
 This will reproduce **Tables 2-3** (but for single experimental run instead of 12) and **Figures 5 and 6** in the paper.
 
-To reproduce **Tables 2-3** in the paper exactly, run steps 1-15 12 times independently, but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by plot_advanced.py for each run, and calculate mean and std (ddof=1) for groups of rows sharing same value of `classifier` column.
+To reproduce **Tables 2-3** in the paper exactly, run steps 1-15 12 times independently, but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
 
 #### 16. Update trained PεN classifier by steps to measure update time
 
@@ -180,7 +180,7 @@ Use Abilene instructions with the following differences:
 
 `python generate_flows.py data_train/geant2009_train/train/geant2009 --seed 1234 --flows 1 --matr 1 --nfiles 120 --intensity 0.125 --bwvar 4 --ecmp --solver --out_path data_train/geant2009_train/train/geant2009/flows.json`
 
-* Number of matrices in training and testing datasets for classifiers (generated at steps 4, 5) are 500 and 500 respectively, (while for Abilene they were 1000 and 2000 respectively). Command for generating flows dataset for training and testing classifiers (step 4) is:
+* Number of matrices in training and testing datasets for classifiers (generated at steps 4, 5) are N_train=500 and N_test=500 respectively (while for Abilene they were N_train=1000 and N_test=2000). Command for generating flows dataset for training and testing classifiers (step 4) is:
 
 `python generate_flows.py data_train/geant2009_rec/train/geant2009 --seed 12345 --flows 1 --matr 1 --nfiles 1000 --intensity 0.125 --bwvar 4 --ecmp --solver --out_path data_train/geant2009_rec/train/geant2009/flows.json`
 
