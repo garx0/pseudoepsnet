@@ -51,6 +51,8 @@ Usage examples:
     parser.add_argument('--update-buffer-length', type=int, help='')
     parser.add_argument('--max-updates', type=int, help='')
     parser.add_argument('--dist-percentile', type=float, help='Distance percentile')
+    parser.add_argument('--disable-antireprs', action='store_true', help='Don''t use antirepresentatives feature')
+    parser.add_argument('--disable-adaptive-radius', action='store_true', help='Don''t use adaptive radius feature')
     args = parser.parse_args()
     return args
 
@@ -142,10 +144,14 @@ def setup_output_directory(args):
 
     timestamp = time.strftime('%Y%m%d_%H%M%S')
     theta_str = "" if args.theta == 0. else f"_theta{args.theta}"
+    no_antireprs_str = "" if not hasattr(args, 'disable_antireprs') or not args.disable_antireprs else "_noantireprs"
+    no_adaptrad_str = "" if not hasattr(args, 'disable_adaptive_radius') or not args.disable_adaptive_radius else "_staticrad"
     if args.mode == 'single':
-        exp_name = f"{args.classifier}_agent{args.agent}_iter{args.iteration}{theta_str}_p{args.dist_percentile}_{args.data_path}_{timestamp}"
+        exp_name = f"{args.classifier}_agent{args.agent}_iter{args.iteration}{theta_str}_p{args.dist_percentile}_"\
+                   f"{args.data_path}{no_antireprs_str}{no_adaptrad_str}_{timestamp}"
     else:
-        exp_name = f"{args.classifier}_full{theta_str}_p{args.dist_percentile}_{args.data_path}_{timestamp}"
+        exp_name = f"{args.classifier}_full{theta_str}_p{args.dist_percentile}_"\
+                   f"{args.data_path}{no_antireprs_str}{no_adaptrad_str}_{timestamp}"
 
     args.output_dir = os.path.join(args.output_dir, exp_name)
 

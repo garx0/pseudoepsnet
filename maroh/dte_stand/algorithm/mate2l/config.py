@@ -24,6 +24,9 @@ class SaActorCfg(BaseModel):
     gat_num_heads: int = 20
     states_logging: bool = False
 
+    # if states_logging = True, log_only_actions decides whether to log both actions and states or only actions
+    log_only_actions: bool = True
+
 class ActorCfg(BaseModel):
     use_memory: bool = False
     # number of saved states

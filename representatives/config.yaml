@@ -24,7 +24,7 @@ seed: 42
 
 verbose: true
 save_plots: true
-save_pred: true
+save_pred: false
 save_reprs: true
 
 # Plot settings will be active in future releases

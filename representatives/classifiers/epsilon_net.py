@@ -45,6 +45,8 @@ class EpsilonNetClassifier(BaseClassifier):
         self.verbose = config.verbose
         self.agent = agent
         self.iteration = iteration
+        self.use_antireprs = not config.disable_antireprs if hasattr(config, 'disable_antireprs') else True
+        self.use_adaptive_radius = not config.disable_adaptive_radius if hasattr(config, 'disable_adaptive_radius') else True
 
         # State
         self.representatives: List[Representative] = []
@@ -230,8 +232,11 @@ class EpsilonNetClassifier(BaseClassifier):
                 if sorted_dists_to_other is not None:
                     dist_to_other = remaining_dists[0]
 
-                    # Radius = distance to other class, but not less than epsilon
-                    radius = max(epsilon, dist_to_other * 0.95)  # 0.95 - margin
+                    if self.use_adaptive_radius:
+                        # Radius = distance to other class, but not less than epsilon
+                        radius = max(epsilon, dist_to_other * 0.95)  # 0.95 - margin
+                    else:
+                        radius = epsilon
                 representatives.append(rep)
                 radiuses.append(radius)
                 remaining_idx = remaining_idx[1:]
@@ -264,7 +269,10 @@ class EpsilonNetClassifier(BaseClassifier):
                     dist_to_other = remaining_dists[0]
 
                     # Radius = distance to other class, but not less than epsilon
-                    radius = max(epsilon, dist_to_other * 0.95)  # 0.95 - margin
+                    if self.use_adaptive_radius:
+                        radius = max(epsilon, dist_to_other * 0.95)  # 0.95 - margin
+                    else:
+                        radius = epsilon
                 representatives.append(rep)
                 radiuses.append(radius)
                 remaining = remaining[1:]
@@ -305,16 +313,21 @@ class EpsilonNetClassifier(BaseClassifier):
         # Build network for each class
         self.representatives = []
         rad = max([self.percentile_dist_to_other.get(x, 1.0) for x in class_points.keys()])
-        antireprs = self._create_uncertainty_representatives(class_points, rad)
-        antireprs = self._merge_antireprs(antireprs)
-        self._antireprs = antireprs
-        self.representatives.extend(antireprs)
-        if self.verbose:
-            print(f"  Added {len(antireprs)} anti-representatives")
+        if self.use_antireprs:
+            antireprs = self._create_uncertainty_representatives(class_points, rad)
+            antireprs = self._merge_antireprs(antireprs)
+            self._antireprs = antireprs
+            self.representatives.extend(antireprs)
+            if self.verbose:
+                print(f"  Added {len(antireprs)} anti-representatives")
+        else:
+            self._antireprs = []
+
 
         for label, points in class_points.items():
             dists = min_dist_to_other[label]
-            points, dists = self._filter_points_with_dists(points, dists, label, self._antireprs)
+            if self.use_antireprs:
+                points, dists = self._filter_points_with_dists(points, dists, label, self._antireprs)
 
             if len(points) == 0:
                 continue
@@ -335,8 +348,6 @@ class EpsilonNetClassifier(BaseClassifier):
 
         return self
 
-    # ================== Classification ==================
-
     def update(self, X, y):
         t_start = datetime.now()
         # Group by class
@@ -351,17 +362,19 @@ class EpsilonNetClassifier(BaseClassifier):
 
         # Build network for each class
         rad = max([self.percentile_dist_to_other.get(x, 1.0) for x in class_points.keys()])
-        antireprs = self._create_uncertainty_representatives(class_points, rad)
-        antireprs = self._merge_antireprs(antireprs)
-        self._antireprs.extend(antireprs)
-        self.representatives.extend(antireprs)
-        if self.verbose:
-            print(f"  Added {len(antireprs)} anti-representatives")
+        if self.use_antireprs:
+            antireprs = self._create_uncertainty_representatives(class_points, rad)
+            antireprs = self._merge_antireprs(antireprs)
+            self._antireprs.extend(antireprs)
+            self.representatives.extend(antireprs)
+            if self.verbose:
+                print(f"  Added {len(antireprs)} anti-representatives")
 
         repr_points_added = 0
         for label, points in class_points.items():
             dists = min_dist_to_other[label]
-            points, dists = self._filter_points_with_dists(points, dists, label, antireprs)
+            if self.use_antireprs:
+                points, dists = self._filter_points_with_dists(points, dists, label, antireprs)
 
             if len(points) == 0:
                 continue

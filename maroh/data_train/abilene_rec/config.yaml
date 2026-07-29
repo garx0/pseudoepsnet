@@ -29,9 +29,10 @@ alg_cfg:
     use_gat: False
     use_memory: False
     states_logging: True
+    log_only_actions: False
 
   horizons: 25
-  episodes: 10000
+  episodes: 3000
   eval_period: 25000
   change_sample_period: 1
   gamma: 0.75

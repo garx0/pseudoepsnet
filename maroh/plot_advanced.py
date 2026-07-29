@@ -7,6 +7,8 @@ import re
 import glob
 import pandas as pd
 from pathlib import Path
+import copy
+import networkx as nx
 import argparse
 plt.rcParams.update({'font.size': 9})
 
@@ -259,31 +261,74 @@ def calc_accuracy(msgs, actions_gr, actions_gr_true, n_msg_iter):
     agent_coverage = np.array(agent_coverage)
     return accuracy_stats, coverage_stats, np.mean(agent_accuracy[~np.isnan(agent_accuracy)]), np.mean(agent_coverage)
 
-def get_neighbors(incoming_links, outcoming_links):
-    n_agents = max(max(incoming_links), max(outcoming_links)) + 1
+def get_neighbors(experiment_base_dir):
+    path_glob = os.path.join(experiment_base_dir, 'train', '*', 'topology.gml')
+    gml_paths = glob.glob(path_glob)
+    if len(gml_paths) > 1:
+        raise ValueError(f"multiple topologies in {path_glob}, need one")
+    elif len(gml_paths) == 0:
+        raise ValueError(f"topology not found in {path_glob}")
+    gml_path = gml_paths[0]
+    G = nx.MultiDiGraph(nx.read_gml(gml_path))
+    n_nodes = G.number_of_nodes()
+    n_links = G.number_of_edges()
+    idx = 0
+    link_ids_dict = {}
+    for i, j, m in G.edges: # i, j - node lables
+        G[i][j][m]['label'] = G[i][j][m]['id']
+        G[i][j][m]['id'] = idx
+        link_ids_dict[idx] = (i, j, m)
+        idx += 1
+    incoming_links = []
+    outcoming_links = []
+    incoming_links_2 = []
+    outcoming_links_2 = []
+    links_opposites = [0] * n_links
+    for i in G.nodes():
+        for j in G.neighbors(i):
+            incoming_link_id = G[i][j][0]['id']
+            links_opposites[G[i][j][0]['id']] = G[j][i][0]['id']
+            for k in G.neighbors(j):
+                outcoming_link_id = G[j][k][0]['id']
+                if k != i:
+                    incoming_links.append(incoming_link_id)
+                    outcoming_links.append(outcoming_link_id)
+    for i in G.nodes():
+        neigh = [G[i][j][0]['id'] for j in G.neighbors(i)]
+        for j in neigh:
+            for k in neigh:
+                if k != j:
+                    incoming_links_2.append(j)
+                    outcoming_links_2.append(k)
+    incoming_links = np.array(incoming_links)
+    outcoming_links = np.array(outcoming_links)
+    incoming_links_2 = np.array(incoming_links_2)
+    outcoming_links_2 = np.array(outcoming_links_2)
+
+    n_agents = n_links
     neighbors_out = np.zeros((n_agents, n_agents), dtype=bool)
     neighbors_in = np.zeros((n_agents, n_agents), dtype=bool)
-    # neighbors2_out = np.zeros((n_agents, n_agents), dtype=bool)
-    # neighbors2_in = np.zeros((n_agents, n_agents), dtype=bool)
+    neighbors2_out = np.zeros((n_agents, n_agents), dtype=bool)
+    neighbors2_in = np.zeros((n_agents, n_agents), dtype=bool)
     for agent in range(n_agents):
         agents_range = np.arange(n_agents)
         neighbors_out_list = sorted(outcoming_links[incoming_links == agent])
         neighbors_out[agent] = np.isin(agents_range, neighbors_out_list, assume_unique=True)
         neighbors_in_list = sorted(incoming_links[outcoming_links == agent])
         neighbors_in[agent] = np.isin(agents_range, neighbors_in_list, assume_unique=True)
-        # neighbors2_out_list = sorted(outcoming_links2[incoming_links2 == agent])
-        # neighbors2_out[agent] = np.isin(agents_range, neighbors2_out_list, assume_unique=True)
-        # neighbors2_in_list = sorted(incoming_links2[outcoming_links2 == agent])
-        # neighbors2_in[agent] = np.isin(agents_range, neighbors2_in_list, assume_unique=True)
+        neighbors2_out_list = sorted(outcoming_links_2[incoming_links_2 == agent])
+        neighbors2_out[agent] = np.isin(agents_range, neighbors2_out_list, assume_unique=True)
+        neighbors2_in_list = sorted(incoming_links_2[outcoming_links_2 == agent])
+        neighbors2_in[agent] = np.isin(agents_range, neighbors2_in_list, assume_unique=True)
 
-    # checking that neighbors_out and neighbors_in are consistent
-    for agent, neighs in enumerate(neighbors_out):
-        for agent2 in range(n_agents):
-            assert neighbors_in[agent2][agent] == neighs[agent2]
-    for agent, neighs in enumerate(neighbors_in):
-        for agent2 in range(n_agents):
-            assert neighbors_out[agent2][agent] == neighs[agent2]
-    return neighbors_in, neighbors_out
+    # # checking that neighbors_out and neighbors_in are consistent
+    # for agent, neighs in enumerate(neighbors_out):
+    #     for agent2 in range(n_agents):
+    #         assert neighbors_in[agent2][agent] == neighs[agent2]
+    # for agent, neighs in enumerate(neighbors_in):
+    #     for agent2 in range(n_agents):
+    #         assert neighbors_out[agent2][agent] == neighs[agent2]
+    return neighbors_in, neighbors_out, neighbors2_in, neighbors2_out
 
 def calc_msgs_actual(msgs, n_msg_iter, neighbors_in, neighbors_out):
     n_agents = msgs.shape[1]
@@ -326,8 +371,11 @@ if __name__ == "__main__":
     exp_names = list(exp_names)
     out_filename_prefix = args.out
 
+    n_msg_iter = int(get_config_value(exp_dirs[0], "message_iterations"))
+    exp_dir_base = os.path.join(exp_dirs[0], "..")
+    neighbors_in, neighbors_out, _, _ = get_neighbors(exp_dir_base)
+
     ecmp_solver_out_filename = "plot_values_ecmp+solver.npz"
-    # solver_out_filename = "plot_values_solver.npz"
     ecmp_solver_pathsave_filename = "plot_values_ecmp+solver_path.json"
     ecmp_solver_cached = False
     if all([os.path.isfile(filename) for filename in
@@ -360,17 +408,6 @@ if __name__ == "__main__":
         phi_opt_full = phi_ecmp_opt_data['solver']
         print("ecmp and solver values loaded successfully")
 
-    # These are for Abilene topology. for different topology, print these arrays in maroh code
-    # (search where incoming_links are created) and paste here.
-    # And change n_msg_iter to message_iterations from SAMAROH configs for different topology if needed.
-    incoming_links = np.array([0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 6, 6, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 14, 15, 15, 16, 16, 17, 18, 18, 18, 19, 19])
-    outcoming_links = np.array([18, 19, 15, 16, 5, 6, 8, 9, 10, 3, 12, 13, 7, 9, 10, 2, 4, 5, 11, 13, 17, 19, 4, 6, 7, 8, 10, 14, 16, 0, 11, 12, 17, 18, 1, 7, 8, 9, 14, 15])
-    # incoming_links2 = np.array([0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19])
-    # outcoming_links2 = np.array([1, 0, 3, 2, 5, 6, 4, 6, 4, 5, 8, 9, 10, 7, 9, 10, 7, 8, 10, 7, 8, 9, 12, 13, 11, 13, 11, 12, 15, 16, 14, 16, 14, 15, 18, 19, 17, 19, 17, 18])
-    n_msg_iter = 3
-    neighbors_in, neighbors_out = get_neighbors(incoming_links, outcoming_links)
-
-    # n_episodes_use = 2000
     n_episodes_use = len(phi_ecmp_full)
 
     phi_ecmp = np.copy(phi_ecmp_full)[:n_episodes_use]
@@ -381,6 +418,58 @@ if __name__ == "__main__":
     phi_arrays = []
     phi_comparison_arrays = []
     phi_comparisons_nomem = (phi_nomem - phi_opt) / (phi_ecmp - phi_opt)
+
+    for exp_dir, exp_name in zip(exp_dirs, exp_names):
+        _, values, _, _, _, _ = load_data([exp_dir], ["phi_values", "messages_agents", "actions_gr", "actions_gr_true"])
+        phi = np.array(values[0]["phi_values"])[:n_episodes_use]
+        msgs = np.array(values[0]["messages_agents"])[:n_episodes_use]
+        actions_gr = np.array(values[0]["actions_gr"])[:n_episodes_use]
+        actions_gr_true = np.array(values[0]["actions_gr_true"])[:n_episodes_use]
+        n_episodes = msgs.shape[0]
+        n_horizons = msgs.shape[1]
+        n_agents = msgs.shape[-1]
+        phi_comparisons = (phi - phi_opt) / (phi_ecmp - phi_opt)
+        phi_arrays.append(phi)
+        phi_comparison_arrays.append(phi_comparisons)
+
+
+    median_fontsize = 8.5 if len(exp_dirs) < 19 else 7.5
+
+    plt.figure(figsize=(10,5), dpi=300)
+    bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], tick_labels=["solver", "no memory"] + exp_names + ["ECMP"],
+                    flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
+    medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
+    for i, median in enumerate(medians, start=1):
+        plt.text(i, median, f'{median:.3f}', size=median_fontsize,
+                 ha='center', va='bottom',
+                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.5)
+             )
+    plt.xticks(rotation=45, ha='right')
+    plt.ylabel("phi")
+    plt.grid()
+    out_filename_plot1 = f"{out_filename_prefix}_plot_phi"
+    plt.savefig(out_filename_plot1, bbox_inches='tight')
+    print(f"saved phi plot to {out_filename_plot1}.png")
+    plt.close()
+
+    plt.figure(figsize=(10,5), dpi=300)
+    bp = plt.boxplot([phi_comparisons_nomem] + phi_comparison_arrays, tick_labels=["no memory"] + exp_names,
+                    flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
+    medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
+    for i, median in enumerate(medians, start=1):
+        plt.text(i, median, f'{median:.3f}', size=median_fontsize,
+                 ha='right', va='bottom',
+                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
+             )
+    plt.xticks(rotation=45, ha='right')
+    plt.ylabel("phi position (solver—ECMP)")
+    plt.ylim(0, 2)
+    plt.grid()
+    out_filename_plot2 = f"{out_filename_prefix}_plot_phi_normalized"
+    plt.savefig(out_filename_plot2, bbox_inches='tight')
+    print(f"saved phi plot to {out_filename_plot2}.png")
+    plt.close()
+
     acc_table_rows = []
     # classes = np.unique(actions_gr_true.flatten())
     classes = np.array([0, 1])
@@ -395,17 +484,15 @@ if __name__ == "__main__":
         n_horizons = msgs.shape[1]
         n_agents = msgs.shape[-1]
 
+        phi_comparisons = (phi - phi_opt) / (phi_ecmp - phi_opt)
+
         msgs = msgs.reshape(n_episodes * n_horizons, *msgs.shape[2:])
         n_msgs_sent, n_msgs_recv, n_msgs_sent_possible, n_msgs_recv_possible = calc_msgs_actual(msgs, n_msg_iter, neighbors_in, neighbors_out)
         actions_gr = actions_gr.reshape(n_episodes * n_horizons, *actions_gr.shape[2:])
         actions_gr_true = actions_gr_true.reshape(n_episodes * n_horizons, *actions_gr_true.shape[2:])
-        # n_msg_iter = msgs.max()
 
         accuracy_stats, coverage_stats, accuracy, coverage = calc_accuracy(msgs, actions_gr, actions_gr_true, n_msg_iter)
 
-        phi_comparisons = (phi - phi_opt) / (phi_ecmp - phi_opt)
-        phi_arrays.append(phi)
-        phi_comparison_arrays.append(phi_comparisons)
         print()
         print(f"{exp_name}:")
         msg_frac = msgs.mean() / n_msg_iter # fraction of exchange iterations done
@@ -491,36 +578,3 @@ if __name__ == "__main__":
     out_filename_table = f"{out_filename_prefix}_table.csv"
     df.to_csv(out_filename_table)
     print(f"saved table to {out_filename_table}")
-
-    plt.figure(figsize=(10,5), dpi=300)
-    bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], tick_labels=["solver", "no memory"] + exp_names + ["ECMP"],
-                    flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
-    medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
-    for i, median in enumerate(medians, start=1):
-        plt.text(i, median, f'{median:.3f}',
-                 ha='center', va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.5))
-    plt.xticks(rotation=45, ha='right')
-    plt.ylabel("phi")
-    plt.grid()
-    out_filename_plot1 = f"{out_filename_prefix}_plot_phi"
-    plt.savefig(out_filename_plot1, bbox_inches='tight')
-    print(f"saved phi plot to {out_filename_plot1}.png")
-    plt.close()
-
-    plt.figure(figsize=(10,5), dpi=300)
-    bp = plt.boxplot([phi_comparisons_nomem] + phi_comparison_arrays, tick_labels=["no memory"] + exp_names,
-                    flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
-    medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
-    for i, median in enumerate(medians, start=1):
-        plt.text(i, median, f'{median:.3f}',
-                 ha='right', va='bottom',
-                bbox=dict(facecolor='white', edgecolor='none', alpha=0.7))
-    plt.xticks(rotation=45, ha='right')
-    plt.ylabel("phi position (solver—ECMP)")
-    plt.ylim(0, 2)
-    plt.grid()
-    out_filename_plot2 = f"{out_filename_prefix}_plot_phi_normalized"
-    plt.savefig(out_filename_plot2, bbox_inches='tight')
-    print(f"saved phi plot to {out_filename_plot2}.png")
-    plt.close()

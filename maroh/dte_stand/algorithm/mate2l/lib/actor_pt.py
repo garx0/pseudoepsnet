@@ -240,7 +240,8 @@ class Actor(torch.nn.Module):
         self.log_message_iterations_done = 0
         self.log_message_iterations_possible = 0
         self.states_logging = self.cfg.states_logging
-        if self.states_logging:
+        self.log_only_actions = self.cfg.log_only_actions
+        if self.states_logging and not self.log_only_actions:
             self.log_states = dict((k, []) for k in range(self.message_iterations + 1))
         if self.memory_used:
             self.log_message_iterations_done_agents = []
@@ -393,7 +394,7 @@ class Actor(torch.nn.Module):
         # padding
         link_states = torch.reshape(input_tensor, (self.num_features, self.n_links))
         link_states = link_states.T
-        if self.states_logging and not self.training and not self.eval_mode:
+        if self.states_logging and not self.log_only_actions and not self.training and not self.eval_mode:
             self.log_states[0].append(link_states.detach().cpu().numpy())
         # padding = (0, self.link_state_size - self.num_features) # was in MATE before
         # link_states = torch.nn.functional.pad(link_states, padding) # was in MATE before
@@ -413,7 +414,7 @@ class Actor(torch.nn.Module):
                 code, policy_memory = self.mind[message_iteration].update_memory(memory_states.detach().cpu().numpy().astype(float), update=self.update_memory)
                 codes.append(code)
                 if code == ACT_VEC_USE or code == ACT_VEC_USE_AND_UPDATE:
-                    if self.states_logging and not self.training and not self.eval_mode:
+                    if self.states_logging and not self.log_only_actions and not self.training and not self.eval_mode:
                         for i in range(message_iteration, self.message_iterations):
                             self.log_states[i + 1].append(link_states.detach().cpu().numpy())
                     return codes, torch.tensor(policy_memory, dtype=torch.float32, device=self.device)
@@ -440,7 +441,7 @@ class Actor(torch.nn.Module):
             aggregated_messages = self.message_aggregation(messages_out, None, messages_neigh, mode = 'on' if self.mode == '1' or self.mode == '2' else 'o')
             link_update_input = torch.cat([link_states, aggregated_messages], dim=1).to(torch.float32)
             link_states = self.link_update_2(link_update_input)
-            if self.states_logging and not self.training and not self.eval_mode:
+            if self.states_logging and not self.log_only_actions and not self.training and not self.eval_mode:
                 self.log_states[message_iteration + 1].append(link_states.detach().cpu().numpy())
 
             # Step 3 - another internal message passing

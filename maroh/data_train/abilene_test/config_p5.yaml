@@ -29,7 +29,7 @@ alg_cfg:
     use_gat: False
     use_memory: True
     memory_type: 'epsilon_net'
-    representatives_path: 'representatives_p5'
+    representatives_path: 'representatives_abilene_p5'
     all_agents: False
     states_logging: True
 

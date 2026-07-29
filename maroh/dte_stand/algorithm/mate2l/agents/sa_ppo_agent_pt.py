@@ -205,6 +205,7 @@ class SaPPOAgent(object):
         self.tracker = HistoryTracker()
         self.set_experiment_identifier(False)
         self.states_logging = self.actor.states_logging
+        self.log_only_actions = self.actor.log_only_actions
         if self.states_logging:
             self.log_actions_gr = [] # greedy actions
             if self.actor.memory_used:
@@ -216,11 +217,11 @@ class SaPPOAgent(object):
 
     def load_dataset(self, path):
         dataset = dict()
-        for x in next(os.walk(path))[1]:
+        for x in sorted(os.listdir(path)):
             h = os.path.join(path, x)
-            dataset[h] = []
-            for y in next(os.walk(h))[2]:
-                if y.endswith('.json'): dataset[h].append(y)
+            if os.path.isdir(h):
+                files = sorted([f for f in os.listdir(h) if f.endswith('.json')])
+                dataset[h] = files
         return dataset
 
     def set_dataset(self, path):
@@ -393,8 +394,9 @@ class SaPPOAgent(object):
         # self.tracker.add_value('rewards', rewards)
         # self.tracker.add_value('probabilities', probabilities)
         if self.states_logging and not self.actor.eval_mode:
-            self.tracker.add_value('states', dict((f"{k}", v) for k, v in self.actor.log_states.items()))
-            self.actor.log_states = dict((k, []) for k in range(self.message_iterations + 1))
+            if not self.log_only_actions:
+                self.tracker.add_value('states', dict((f"{k}", v) for k, v in self.actor.log_states.items()))
+                self.actor.log_states = dict((k, []) for k in range(self.message_iterations + 1))
             self.tracker.add_value('actions_gr', {"actions_gr": self.log_actions_gr})
             self.log_actions_gr = []
             if self.actor.memory_used and not self.actor.training:
@@ -738,8 +740,9 @@ class SaPPOAgent(object):
                 # print(f"{self.actor.eval_mode=}")
                 if self.states_logging and not self.actor.eval_mode:
                     # print(f"tracker adding: states ({len(self.actor.log_states)}), actions_gr ({len(self.log_actions_gr)})")
-                    self.tracker.add_value('states', dict((f"{k}", v) for k, v in self.actor.log_states.items()))
-                    self.actor.log_states = dict((k, []) for k in range(self.message_iterations + 1))
+                    if not self.log_only_actions:
+                        self.tracker.add_value('states', dict((f"{k}", v) for k, v in self.actor.log_states.items()))
+                        self.actor.log_states = dict((k, []) for k in range(self.message_iterations + 1))
                     self.tracker.add_value('actions_gr', {"actions_gr": self.log_actions_gr})
                     self.log_actions_gr = []
                 new_sample = False

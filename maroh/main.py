@@ -118,7 +118,7 @@ if __name__ == '__main__':
     pt_str = "_pt" if args.pytorch else ""
     train_mode = args.train_mode
     states_path = args.states
-    result_path = os.path.join(args.experiment_folder, f"exp_{date_str}_{args.name}_{sa_str}{pt_str}")
+    result_path = os.path.join(args.experiment_folder, f"exp_{date_str}_{args.name}")
     os.mkdir(result_path)
     shutil.copy(os.path.join(args.experiment_folder, f'config{args.cfg}.yaml'), result_path)
     PhiCalculator.set_plot_folder(result_path)

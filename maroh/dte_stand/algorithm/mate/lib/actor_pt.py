@@ -240,7 +240,8 @@ class Actor(torch.nn.Module):
         self.log_message_iterations_done = 0
         self.log_message_iterations_possible = 0
         self.states_logging = self.cfg.states_logging
-        if self.states_logging:
+        self.log_only_actions = self.cfg.log_only_actions
+        if self.states_logging and not self.log_only_actions:
             self.log_states = dict((k, []) for k in range(self.message_iterations + 1))
         if self.memory_used:
             self.log_message_iterations_done_agents = []
@@ -406,7 +407,7 @@ class Actor(torch.nn.Module):
         # link_states = torch.nn.functional.pad(link_states, padding) # was in MATE before
         # print(f"message_iteration=0, link_states before init: {link_states}")
         link_states = self.link_state_initializer(link_states_init)
-        if self.states_logging and not self.training and not self.eval_mode:
+        if self.states_logging and not self.log_only_actions and not self.training and not self.eval_mode:
             if self.use_state_before_init:
                 self.log_states[0].append(link_states_init.detach().cpu().numpy())
             else:
@@ -443,7 +444,7 @@ class Actor(torch.nn.Module):
                 for i in final_actions:
                     iterations_done_dict[i] -= 1
                 if len(final_actions) == self.n_links:
-                    if self.states_logging and not self.training and not self.eval_mode:
+                    if self.states_logging and not self.log_only_actions and not self.training and not self.eval_mode:
                         for i in range(message_iteration, self.message_iterations):
                             self.log_states[i + 1].append(link_states.detach().cpu().numpy())
                     for i in range(self.n_links):
@@ -473,7 +474,7 @@ class Actor(torch.nn.Module):
             link_states = self.link_update_2(link_update_input)
             for i, state in last_states.items():
                 link_states[i] = state
-            if self.states_logging and not self.training and not self.eval_mode:
+            if self.states_logging and not self.log_only_actions and not self.training and not self.eval_mode:
                 self.log_states[message_iteration + 1].append(link_states.detach().cpu().numpy())
 
             # Step 3 - another internal message passing
