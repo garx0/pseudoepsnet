@@ -2,8 +2,8 @@
 
 mode: "full"
 classifier: "epsilon_net" # "epsilon_net", "kNN", "centroids"
-data_path: "train4_1000"
-data_path_test: "test4"
+data_path: "train_abilene"
+data_path_test: "test_abilene"
 output_dir: "results"
 #saved_dists: "min_dists.npz"
 
