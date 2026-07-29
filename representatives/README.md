@@ -60,7 +60,7 @@ Parameter	        |Type	            |Description
 --save-plots	    |flag	            |Save plots
 
 ### Input Data
-The configuration file provided in the repository loads train and test data from train4_1000 and test4 respectively.
+The default configuration file provided in the repository loads train and test data from train_abilene and test_abilene respectively.
 
 ### Output Data
 After the experiment completes, the following files are saved in a timestamped subdirectory within the specified output directory:
