@@ -248,7 +248,7 @@ if __name__ == "__main__":
             plt.scatter(
                 df_knn_iter['accuracy'],
                 df_knn_iter['coverage'],
-                color="black", s=60, marker='<', edgecolor='black',
+                color="black", s=60, marker='x', edgecolor='black',
                 label="k-NN"
             )
 
@@ -262,8 +262,8 @@ if __name__ == "__main__":
             plt.scatter(
                 df_centroids_iter['accuracy'],
                 df_centroids_iter['coverage'],
-                color="purple", marker='o', edgecolor='black', s=60,
-                label="centroids"
+                color="black", marker='*', edgecolor='black', s=60,
+                label="Centroids"
             )
 
         plt.ylabel("coverage")

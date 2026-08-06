@@ -84,7 +84,7 @@ If experiments for plotting contain PεN without antirepresentatives, run:
 
 `python plot2d_abtests.py -i plot2d_input.json`
 
-This will reproduce **Figure 3** in the paper.
+This will reproduce **Figure 3** in the paper. It will also output a .csv file with all data shown on the plots, from which **Table 2** in the paper can be reproduced.
 
 #### 9. Aggregate and compare results of multiple experiments
 
@@ -94,7 +94,7 @@ Run:
 
 `python table.py -i table_config.yaml`
 
-If run `table.py` on PεN experiment results for dist_percentile values 0.5 and 1, this will reproduce **Table 6** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
+Running `table.py` on results of PεN experiments for dist_percentile values 0.5 and 1 will reproduce **Table 10** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
 
 #### 10. Go back to `maroh` directory in the root of this repository
 
@@ -135,15 +135,19 @@ For each Δ value `<value>` in [0.003, 0.004], run:
 
 `python main.py data_train/abilene_test -t -c _cluster_<value> --seed 123 -m data_train/abilene_train/model --memory data_train/abilene_clustertrain/<name4_value>/results/model/memory.npz`
 
-#### 15. Make plot and tables of two-layer method experiments
+#### 15. Make plot and tables of two-layer method experiments results
     
-Make `plot_advanced_input.json` file with paths to experiment results directories from `data_train/abilene_rec` (SAMAROH Φ values without experience layer) and `data_train/abilene_test`, see format example in `plot_advanced_input_abilene_example.json` example. Also specify `data_train/abilene_test/train/abilene` path there, which contains .npz files with ECMP and LP-solver values calculated for the same traffic matrices. Run:
+Make `plot_advanced_input.json` file with paths to experiment results directories from `data_train/abilene_rec` (SAMAROH Φ values without experience layer) and `data_train/abilene_test`, see format example in `plot_advanced_input_abilene_example.json` example. Also specify `data_train/abilene_test/train/abilene` path there, which contains .npz files with ECMP and LP-solver values calculated for the same traffic matrices.
+
+To calculate number of representatives for a Centroids experiment precisely, also specify path to Centroids training experiment results (see example in `plot_advanced_input_geant2009_example.json`). If this path is not specified, number of representatives for Centroids classifier will be calculated as 2 for each agent.
+
+Run:
 
 `python plot_advanced.py -i plot_advanced_input.json`
 
-This will reproduce **Tables 2-3** (but for single experimental run instead of 12) and **Figures 5 and 6** in the paper.
+This will reproduce **Tables 4-5** (but for single experimental run instead of 12) and **Figures 5 and 6** in the paper.
 
-To reproduce **Tables 2-3** in the paper exactly, run steps 1-15 12 times independently, but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
+To reproduce **Tables 4-5** in the paper exactly, run steps 1-15 12 times independently, but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
 
 #### 16. Update trained PεN classifier by steps to measure update time
 
@@ -161,7 +165,7 @@ Run:
 
 `python update_time_analysis.py -i update_time_analysis_input.json`
 
-This will reproduce **Table 7** in the paper.
+This will reproduce **Table 9** in the paper.
 
 ### B. Experiments on Geant2009 topology
 

@@ -1,6 +1,7 @@
 {
     "exp_dir_nomemory": "data_train/geant2009_rec/exp_2026-07-25,17-20-49.738__non-sa",
     "flows_solver_ecmp": "data_train/geant2009_test/train/geant2009",
+    "centroids_exp_dir": "../representatives/results/geant2009/centroids_full_p5_traing_500_20260726_121511",
     "exp_dirs_names": [
         ["data_train/geant2009_test/exp_2026-07-26,18-52-47.362_p10_non-sa",
         "PεN (p=10%)"],

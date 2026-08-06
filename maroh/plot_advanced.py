@@ -351,7 +351,13 @@ def calc_msgs_actual(msgs, n_msg_iter, neighbors_in, neighbors_out):
             agents_cansend[mask] = False
     return n_msgs_sent, n_msgs_recv, n_msgs_sent_possible, n_msgs_recv_possible
 
-
+def load_representatives_experiment(dirpath: str):
+    """Loading one experiment from JSON"""
+    filepaths = glob.glob(os.path.join(dirpath, "analysis_*.json"))
+    assert len(filepaths) == 1, filepaths
+    filepath = filepaths[0]
+    with open(filepath, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Read two files via named parameters')
@@ -365,6 +371,7 @@ if __name__ == "__main__":
     exp_dirs_names = paths_json_data["exp_dirs_names"]
     exp_dir_nomem = paths_json_data["exp_dir_nomemory"]
     opt_path = paths_json_data["flows_solver_ecmp"]
+    centroids_exp_dir = paths_json_data.get("centroids_exp_dir", None)
     opt_path_resolve = str(Path(opt_path).resolve())
     exp_dirs, exp_names = zip(*exp_dirs_names)
     exp_dirs = list(exp_dirs)
@@ -534,8 +541,14 @@ if __name__ == "__main__":
                             n_reprs_mean = classifier_data_sizes[reprs_path]
                         n_reprs_std = 0
                 elif memory_type == "centroids":
-                    n_reprs_mean = len(classes)
-                    n_reprs_std = 0
+                    if centroids_exp_dir is None:
+                        n_reprs_mean = len(classes)
+                        n_reprs_std = 0
+                    else:
+                        exp_data = load_representatives_experiment(centroids_exp_dir)
+                        n_reprs_list = [r['metrics']['num_reprs'] for r in exp_data['results']]
+                        n_reprs_mean = np.mean(n_reprs_list)
+                        n_reprs_std = np.std(n_reprs_list, ddof=1)
                 elif memory_type == "cluster":
                     memory_size = get_config_value(exp_dir, "memory_size")
                     if memory_size is not None:
