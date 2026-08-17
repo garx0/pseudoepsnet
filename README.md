@@ -86,9 +86,7 @@ Results will appear in a new subdirectory of `representatives/baselines/results`
 
 Go back to `representatives` directory in the repository root
 
-List the experiment directories to be plotted in `plot2d_input.json` (see format example in `plot2d_input_abilene_example.json`).
-
-If experiments for plotting only feature PεN (with antirepresentatives), k-NN, Centroids experiments, run:
+List the experiment directories to be plotted in `plot2d_input.json` (see format example in `plot2d_input_abilene_example.json`), and run:
 
 `python plot2d.py -i plot2d_input.json`
 
