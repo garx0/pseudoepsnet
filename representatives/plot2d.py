@@ -23,11 +23,16 @@ def get_exp_name(exp_folder):
     if m is None:
         exp_name = exp_folder
     else:
-        algo, _, percentile, train_data = m.groups()
+        algo, _, percentile, misc = m.groups()
         if "knn" in algo.lower() or "centroids" in algo.lower():
             exp_name = f"{algo}"
         else:
-            exp_name = f"{algo}, p={percentile}%"
+            algo_full = algo
+            if "noantireprs" in misc:
+                algo_full = f"{algo_full} (no antireprs)"
+            if "staticrad" in misc:
+                algo_full = f"{algo_full} (static radius)"
+            exp_name = f"{algo_full}, p={percentile}%"
     return exp_name
 
 if __name__ == "__main__":
@@ -50,10 +55,17 @@ if __name__ == "__main__":
     for exp_folder in exp_folders:
         try:
             exp_data = load_experiment(exp_folder)
-            exp_name = get_exp_name(Path(exp_folder).name)
-            experiments.append(exp_data)
-            exp_names.append(exp_name)
-            print(f"✓ Loaded: {exp_name} ({len(exp_data['results'])} results)")
+            if exp_data['params']['classifier'] != "baselines":
+                exp_name = get_exp_name(Path(exp_folder).name)
+                experiments.append(exp_data)
+                exp_names.append(exp_name)
+                print(f"✓ Loaded: {exp_name} ({len(exp_data['results'])} results)")
+            else:
+                for exp_name in exp_data['params']['models']:
+                    exp_data_cur = {'params': exp_data['params'], 'results': exp_data['results'][exp_name]}
+                    experiments.append(exp_data_cur)
+                    exp_names.append(exp_name)
+                    print(f"✓ Loaded: {exp_name} ({len(exp_data_cur['results'])} results)")
         except Exception as e:
             print(f"✗ Error loading {exp_folder}: {e}")
 
@@ -99,8 +111,9 @@ if __name__ == "__main__":
 
             accuracies = [r['metrics']['accuracy'] for r in iter_results]
             # Coverage (classified ratio)
-            coverages = [r['metrics']['confident_classifications'] / r['metrics']['total_points']
-                        for r in iter_results]
+            # coverages = [r['metrics']['confident_classifications'] / r['metrics']['total_points']
+                        # for r in iter_results]
+            coverages = [r['metrics']['coverage'] for r in iter_results]
             compressions = [r['metrics']['compression_ratio']
                         for r in iter_results]
 
@@ -131,16 +144,58 @@ if __name__ == "__main__":
         print("No data to plot!")
         exit(1)
 
+    # Split by experiment types
+    df_epsnet = df[df['experiment'].str.contains("epsilon_net", case=False)
+                    & ~df['experiment'].str.contains("no antireprs", case=False)
+                    & ~df['experiment'].str.contains("static radius", case=False)]
+    df_epsnet_noanti = df[df['experiment'].str.contains("epsilon_net", case=False)
+                    & df['experiment'].str.contains("no antireprs", case=False)
+                    & ~df['experiment'].str.contains("static radius", case=False)]
+    df_epsnet_sr = df[df['experiment'].str.contains("epsilon_net", case=False)
+                    & ~df['experiment'].str.contains("no antireprs", case=False)
+                    & df['experiment'].str.contains("static radius", case=False)]
+    df_epsnet_noanti_sr = df[df['experiment'].str.contains("epsilon_net", case=False)
+                    & df['experiment'].str.contains("no antireprs", case=False)
+                    & df['experiment'].str.contains("static radius", case=False)]
+    df_knn = df[df['experiment'].str.contains("knn", case=False)]
+    df_centroids = df[df['experiment'].str.contains("centroids", case=False)]
+    df_baselines = {}
+    baseline_models = ["LVQ1", "GLVQ", "GLVQ_sklearn", "LRVQ", "ProtoNet"]
+    for model in baseline_models:
+        df_baselines[model] = df[df['experiment'] == model]
+
+    # unused: dict(marker='1', color="black", s=120),
+
+    baseline_styles = {
+        "k-NN": dict(marker='x', color="black", s=60, linewidth=1.5),
+        "Centroids": dict(marker='*', color="black", s=60, linewidth=1),
+        "LVQ1": dict(marker='+', color="black", s=90, linewidth=1.5),
+        "GLVQ": dict(marker='^', facecolor='None', edgecolor='black', s=90, linewidth=1),
+        "GLVQ_sklearn": dict(marker='v', s=90, facecolor='None', edgecolor='black', linewidth=1),
+        "LRVQ": dict(marker='2', color="black", s=120, linewidth=1.5),
+        "ProtoNet": dict(marker='s', facecolor='None', edgecolor="black", s=90, linewidth=1),
+    }
+
+    baseline_label_rename = {"GLVQ_sklearn": "GLVQ (sklearn-lvq)"}
+
     # Plot for each iteration
     for iteration in common_iterations:
         df_iter = df[df['iteration'] == iteration]
         if df_iter.empty:
             continue
-        df_epsnet_iter = df_iter[df_iter['experiment'].str.contains("epsilon_net", case=False)]
-        df_knn_iter = df_iter[df_iter['experiment'].str.contains("knn", case=False)]
-        df_centroids_iter = df_iter[df_iter['experiment'].str.contains("centroids", case=False)]
+        del df_iter
+        df_epsnet_iter = df_epsnet[df_epsnet['iteration'] == iteration]
+        df_epsnet_noanti_iter = df_epsnet_noanti[df_epsnet_noanti['iteration'] == iteration]
+        df_epsnet_sr_iter = df_epsnet_sr[df_epsnet_sr['iteration'] == iteration]
+        df_epsnet_noanti_sr_iter = df_epsnet_noanti_sr[df_epsnet_noanti_sr['iteration'] == iteration]
+        df_knn_iter = df_knn[df_knn['iteration'] == iteration]
+        df_centroids_iter = df_centroids[df_centroids['iteration'] == iteration]
+        df_baselines_iter = {}
+        for model in baseline_models:
+            df_baselines_iter[model] = df_baselines[model][df_baselines[model]['iteration'] == iteration]
 
         plt.figure(figsize=(7,4), dpi=300)
+        plt.grid(True, alpha=0.3, color='black')
         ax = plt.gca()
 
         # Define color map for percentile
@@ -165,49 +220,104 @@ if __name__ == "__main__":
                 label="PεN"
             )
 
-            # Annotate points
-            # if len(df_epsnet_iter) > 0:
-            #     # idx_annotate = [1, 2] if iteration < 3 else [1]
-            #     idx_annotate = [i for i in idx_annotate if i < len(df_epsnet_iter)]
-            #     for i in idx_annotate:
-            #         x = df_epsnet_iter.iloc[i]['accuracy']
-            #         y = df_epsnet_iter.iloc[i]['coverage']
-            #         ax.annotate(f"({x:.3f}, {y:.2f})", (x, y),
-            #                    ha='left', fontsize=7,
-            #                    bbox=dict(facecolor='white', edgecolor='none', alpha=0.5))
+        if not df_epsnet_noanti_iter.empty:
+            compressions_inv = 1 / df_epsnet_noanti_iter['compression'].values
+            # Avoid log(0)
+            compressions_inv_log = np.log10(np.maximum(compressions_inv, 1e-20))
+            sc = plt.scatter(
+                df_epsnet_noanti_iter['accuracy'],
+                df_epsnet_noanti_iter['coverage'],
+                c=compressions_inv_log,
+                vmin=cbar_vmin, vmax=cbar_vmax,
+                s=50, cmap=cm,
+                marker='.',
+                edgecolor='black',
+                linewidth=0.5,
+                label="PεN (no antirepr.)"
+            )
+
+        if not df_epsnet_sr_iter.empty:
+            compressions_inv = 1 / df_epsnet_sr_iter['compression'].values
+            # Avoid log(0)
+            compressions_inv_log = np.log10(np.maximum(compressions_inv, 1e-20))
+            sc = plt.scatter(
+                df_epsnet_sr_iter['accuracy'],
+                df_epsnet_sr_iter['coverage'],
+                c=compressions_inv_log,
+                vmin=cbar_vmin, vmax=cbar_vmax,
+                s=50, cmap=cm,
+                marker='*',
+                edgecolor='black',
+                linewidth=0.5,
+                label="PεN (static radius)"
+            )
+
+        if not df_epsnet_noanti_sr_iter.empty:
+            compressions_inv = 1 / df_epsnet_noanti_sr_iter['compression'].values
+            # Avoid log(0)
+            compressions_inv_log = np.log10(np.maximum(compressions_inv, 1e-20))
+            sc = plt.scatter(
+                df_epsnet_noanti_sr_iter['accuracy'],
+                df_epsnet_noanti_sr_iter['coverage'],
+                c=compressions_inv_log,
+                vmin=cbar_vmin, vmax=cbar_vmax,
+                s=50, cmap=cm,
+                marker='P',
+                edgecolor='black',
+                linewidth=0.5,
+                label="PεN (no antirepr., static radius)"
+            )
 
         # Plot kNN points
         if not df_knn_iter.empty:
-            for _, row in df_knn_iter.iterrows():
-                ax.annotate(f"({row['accuracy']:.3f}, {row['coverage']:.2f})",
-                           (row['accuracy'], row['coverage']),
-                           ha='left',
-                           bbox=dict(facecolor='white', edgecolor='none', alpha=0.4))
+            # for _, row in df_knn_iter.iterrows():
+            #     ax.annotate(f"({row['accuracy']:.3f}, {row['coverage']:.2f})",
+            #                (row['accuracy'], row['coverage']),
+            #                ha='left',
+            #                bbox=dict(facecolor='white', edgecolor='none', alpha=0.4))
             plt.scatter(
                 df_knn_iter['accuracy'],
                 df_knn_iter['coverage'],
-                color="black", s=60, marker='x', edgecolor='black',
-                label="k-NN"
+                label="k-NN",
+                **baseline_styles["k-NN"],
             )
 
         # Plot centroids points
         if not df_centroids_iter.empty:
-            for _, row in df_centroids_iter.iterrows():
-                ax.annotate(f"({row['accuracy']:.3f}, {row['coverage']:.2f})",
-                           (row['accuracy'], row['coverage']),
-                           ha='left',
-                           bbox=dict(facecolor='white', edgecolor='none', alpha=0.4))
+            # for _, row in df_centroids_iter.iterrows():
+            #     ax.annotate(f"({row['accuracy']:.3f}, {row['coverage']:.2f})",
+            #                (row['accuracy'], row['coverage']),
+            #                ha='left',
+            #                bbox=dict(facecolor='white', edgecolor='none', alpha=0.4))
             plt.scatter(
                 df_centroids_iter['accuracy'],
                 df_centroids_iter['coverage'],
-                color="black", marker='*', edgecolor='black', s=60,
-                label="Centroids"
+                label="Centroids",
+                **baseline_styles["Centroids"],
             )
+
+        # Plot other baselines points
+        for model in baseline_models:
+            df_baselines_iter_model = df_baselines_iter[model]
+            if not df_baselines_iter_model.empty:
+                if model == "LRVQ":
+                    for _, row in df_baselines_iter_model.iterrows():
+                        ax.annotate(f"({row['accuracy']:.3f}, {row['coverage']:.2f})",
+                                   (row['accuracy'], row['coverage']),
+                                   ha='right',
+                                   bbox=dict(facecolor='white', edgecolor='none', alpha=0.4))
+                plt.scatter(
+                    df_baselines_iter_model['accuracy'],
+                    df_baselines_iter_model['coverage'],
+                    label=baseline_label_rename.get(model, model),
+                    **baseline_styles[model],
+                )
 
         plt.ylabel("coverage")
         plt.xlabel("accuracy")
-        plt.grid(True)
+        # plt.grid(True)
         plt.legend()
+        plt.tight_layout()
 
         # Add colorbar for epsilon_net if present
         if not df_epsnet_iter.empty:

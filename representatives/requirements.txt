@@ -5,3 +5,8 @@ scipy==1.13.1
 seaborn==0.13.2
 sklearn==1.5.1
 
+# Only required for the external prototype-based baselines (representatives/baselines/):
+scikit-learn==1.5.1       # sklearn-lvq dependency
+sklearn-lvq==1.1.0        # open-source GLVQ (GLVQ_sklearn)
+torch>=2.0                # Prototypical Net (ProtoNet)
+

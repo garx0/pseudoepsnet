@@ -1,0 +1,35 @@
+{
+  "data_train": "../train_abilene",
+  "data_test": "../test_abilene",
+  "models": {
+    "LVQ1": {
+      "m": 8,
+      "epochs": 25,
+      "lr": 0.05
+    },
+    "GLVQ": {
+      "m": 8,
+      "epochs": 30,
+      "lr": 0.01
+    },
+    "GLVQ_sklearn": {
+      "m": 8,
+      "max_iter": 300,
+      "gtol": 1e-5
+    },
+    "LRVQ": {
+      "m": 8,
+      "epochs": 25,
+      "lr": 0.05,
+      "target_coverage": 0.56
+    },
+    "ProtoNet": {
+      "dim_out": 64,
+      "epochs": 100,
+      "lr": 0.005,
+      "batch": 2048,
+      "seed": 0,
+      "n_support": 100
+    }
+  }
+}

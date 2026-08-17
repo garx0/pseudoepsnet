@@ -13,6 +13,7 @@
         "results/geant2009/epsilon_net_full_p15.0_traing_500_20260726_170231",
         "results/geant2009/epsilon_net_full_p20.0_traing_500_20260726_170236",
         "results/geant2009/kNN_full_p5_traing_500_20260726_122907",
-        "results/geant2009/centroids_full_p5_traing_500_20260726_121511"
+        "results/geant2009/centroids_full_p5_traing_500_20260726_121511",
+        "baselines/results/baselines_train_geant2009_20260813_125814"
     ]
 }

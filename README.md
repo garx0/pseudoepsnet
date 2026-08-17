@@ -72,7 +72,19 @@ For k-NN and Centroids, run following commands respectively:
 
 Results for each experiment will appear in a new subdirectory of results directory. For PεN, it will contain saved representatives, which can be loaded into other experiments.
 
-#### 8. Plot accuracy and coverage of classifiers on test data
+#### 8. Train and test other baseline classifiers on the recorded dataset
+
+Go to `representatives/baselines` directory.
+
+Specify paths to datasets and model parameters in `config_abilene.json` file (see example in `config_abilene_example.json`), and run:
+
+`python run_baselines.py -i config_abilene.json`
+
+Results will appear in a new subdirectory of `representatives/baselines/results` directory.
+
+#### 9. Plot accuracy and coverage of classifiers on test data
+
+Go back to `representatives` directory in the repository root
 
 List the experiment directories to be plotted in `plot2d_input.json` (see format example in `plot2d_input_abilene_example.json`).
 
@@ -80,13 +92,9 @@ If experiments for plotting only feature PεN (with antirepresentatives), k-NN, 
 
 `python plot2d.py -i plot2d_input.json`
 
-If experiments for plotting contain PεN without antirepresentatives, run:
-
-`python plot2d_abtests.py -i plot2d_input.json`
-
 This will reproduce **Figure 3** in the paper. It will also output a .csv file with all data shown on the plots, from which **Table 2** in the paper can be reproduced.
 
-#### 9. Aggregate and compare results of multiple experiments
+#### 10. Aggregate and compare results of multiple experiments
 
 Make `table_config.yaml` with paths and names of experiments to analyze, see format example in `table_config_abilene_example.yaml`.
 
@@ -96,9 +104,9 @@ Run:
 
 Running `table.py` on results of PεN experiments for dist_percentile values 0.5 and 1 will reproduce **Table 10** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
 
-#### 10. Go back to `maroh` directory in the root of this repository
+#### 11. Go back to `maroh` directory in the root of this repository
 
-#### 11. Test a two-layer method with SAMAROH model and PεN classifier as the experience layer
+#### 12. Test a two-layer method with SAMAROH model and PεN classifier as the experience layer
 
 For each distance percentile value `<value>` in [0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10] do the following:
 
@@ -111,7 +119,7 @@ For each distance percentile value `<value>` in [0.001, 0.01, 0.05, 0.1, 0.25, 0
 
 Note that in `python main.py <train_dir> -t -c <name> ...` commands, `-c` argument does not specify any parameter directly, but rather specifies the `<train_dir>/config<name>.yaml` configuration file to be loaded, therefore that file should exist beforehand. To run experiments on parameter values outside the paper's experimental research scope, modify contents of an existing configuration file (where all parameter values are specified).
 
-#### 12. Test a two-layer method with SAMAROH model and k-NN or Centroids classifier as the experience layer
+#### 13. Test a two-layer method with SAMAROH model and k-NN or Centroids classifier as the experience layer
 
 For k-NN and Centroids activating on all iterations (`<value>` = 0) or after i-th iteration (`<value>` = i+1, i = 0..K-2, where K=3 for Abilene experiments), run these commands (for k-NN and Centroids experiments respectively):
 
@@ -121,7 +129,7 @@ For k-NN and Centroids activating on all iterations (`<value>` = 0) or after i-t
 
 These experiments will use training data from path `../representatives/train_abilene` relative to `maroh` directory root, so make sure that `maroh` and `representatives` directories are located in same directory.
 
-#### 13. Prepare experience layer for testing SAMAROH-2L method (with clustering)
+#### 14. Prepare experience layer for testing SAMAROH-2L method (with clustering)
 
 For each Δ value `<value>` in [0.003, 0.004], run:
 
@@ -129,14 +137,14 @@ For each Δ value `<value>` in [0.003, 0.004], run:
 
 Result for each `<value>` will appear in new directory `data_train/abilene_clustertrain/<name4_value>`. Representatives will be saved in `data_train/abilene_clustertrain/<name4_value>/results/model/memory.npz`
 
-#### 14. Test SAMAROH-2L method
+#### 15. Test SAMAROH-2L method
 
 For each Δ value `<value>` in [0.003, 0.004], run:
 
 `python main.py data_train/abilene_test -t -c _cluster_<value> --seed 123 -m data_train/abilene_train/model --memory data_train/abilene_clustertrain/<name4_value>/results/model/memory.npz`
 
-#### 15. Make plot and tables of two-layer method experiments results
-    
+#### 16. Make plot and tables of two-layer method experiments results
+
 Make `plot_advanced_input.json` file with paths to experiment results directories from `data_train/abilene_rec` (SAMAROH Φ values without experience layer) and `data_train/abilene_test`, see format example in `plot_advanced_input_abilene_example.json` example. Also specify `data_train/abilene_test/train/abilene` path there, which contains .npz files with ECMP and LP-solver values calculated for the same traffic matrices.
 
 To calculate number of representatives for a Centroids experiment precisely, also specify path to Centroids training experiment results (see example in `plot_advanced_input_geant2009_example.json`). If this path is not specified, number of representatives for Centroids classifier will be calculated as 2 for each agent.
@@ -147,9 +155,9 @@ Run:
 
 This will reproduce **Tables 4-5** (but for single experimental run instead of 12) and **Figures 5 and 6** in the paper.
 
-To reproduce **Tables 4-5** in the paper exactly, run steps 1-15 12 times independently, but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
+To reproduce **Tables 4-5** in the paper exactly, run steps 1-7 and 9-16 12 times independently (without running k-NN and Centroids in step 7), but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
 
-#### 16. Update trained PεN classifier by steps to measure update time
+#### 17. Update trained PεN classifier by steps to measure update time
 
 For each `<dp>` in [0.5, 1], for each `<len>` in [4, 8, 16, 32, 64, 128, 256], run:
 
@@ -157,7 +165,7 @@ For each `<dp>` in [0.5, 1], for each `<len>` in [4, 8, 16, 32, 64, 128, 256], r
 
 (while specifying `--reprs-path` as directory with representatives from PεN training experiment with distance percentile `<dp>`).
 
-#### 17. Aggregate update time experiment results into a table
+#### 18. Aggregate update time experiment results into a table
 
 Make `update_time_analysis_input.json` file with directories and names of update time measurement experiments, see format example in `update_time_analysis_input_abilene_example.json`.
 
@@ -189,10 +197,6 @@ Use Abilene instructions with the following differences:
 
     * Copy any `flows*.json` file to `data_train/geant2009_rec/test/geant2009`, `data_train/geant2009_test/test/geant2009`, `data_train/geant2009_clustertrain/test/geant2009`.
 
-* Geant2009 experiments used different values of PεN's distance percentile and SAMAROH-2L's Δ parameter, they can be found in the paper (or in config file names in `data_train/geant2009_test`, `data_train/geant2009_clustertrain`). For step 12, note that Geant2009 experiments used K=5 (number of message iterations).
+* Geant2009 experiments used different values of PεN's distance percentile and SAMAROH-2L's Δ parameter, they can be found in the paper (or in config file names in `data_train/geant2009_test`, `data_train/geant2009_clustertrain`). For step 13, note that Geant2009 experiments used K=5 (number of message iterations).
 
-* Experiments at steps 16-17 were not conducted on Geant2009 topology in the paper.
-
-
-
-
+* Experiments at steps 17-18 were not conducted on Geant2009 topology in the paper.
