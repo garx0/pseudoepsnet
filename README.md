@@ -22,21 +22,17 @@ Results will appear in new directory `data_train/abilene_train/exp_<name1>`. Tak
 
 #### 4. Generate traffic matrices for recording a dataset of states and actions
 
-`python generate_flows.py data_train/abilene_rec/train/abilene --seed 123456 --flows 1 --matr 1 --nfiles 10000 --intensity 0.2 --bwvar 4 --ecmp --solver --out_path data_train/abilene_rec/train/abilene/flows.json`
-
-Remove files from `flows1000*` to `flows7999*` from `data_train/abilene_rec/train/abilene`.
+`python generate_flows.py data_train/abilene_rec/train/abilene --seed 123456 --flows 1 --matr 1 --nfiles 3000 --intensity 0.2 --bwvar 4 --ecmp --solver --out_path data_train/abilene_rec/train/abilene/flows.json`
 
 Copy files from `flows0000.json` to `flows0999.json` to `data_train/abilene_clustertrain/train/abilene`.
 
-Copy files from `flows8000*` to `flows9999*` to `data_train/abilene_test/train/abilene` (including .npy and .npz files).
+Copy files from `flows1000*` to `flows2999*` to `data_train/abilene_test/train/abilene` (including .npy and .npz files).
 
 Copy any single `flows*.json` file to `data_train/abilene_rec/test/abilene`, `data_train/abilene_test/test/abilene`, `data_train/abilene_clustertrain/test/abilene` (these flows are not used for experimental results, but MAROH will not run if there are no flows in these directories).
 
-To clarify, naming of `data_train/*/train` and `data_train/*/test` directories corresponds to MAROH training mode. However, experiments in abilene_rec, abilene_test, abilene_clustertrain directories run in training mode but with actual training turned off, so in this case it is just evaluation of MAROH on flows in train directory, while results on flows in test directory are ignored.
-
-If reproducing exact same flows as in paper's experiments is not required, this procedure can be simplified by generating only 3000 flows (`--nfiles 3000`) and copying files corresponding to last 2000 flows to `data_train/abilene_test/train/abilene`.
-
-In general, to generate N_train and N_test flow matrices, use `--nfiles <N_train+N_test>` and copy json files for first N_train flow matrices to `data_train/abilene_clustertrain/train/abilene` and all files for last N_test flow matrices to `data_train/abilene_test/train/abilene`.
+> To clarify, naming of `data_train/*/train` and `data_train/*/test` directories corresponds to MAROH training mode. However, experiments in abilene_rec, abilene_test, abilene_clustertrain directories run in training mode but with actual training turned off, so in this case it is just evaluation of MAROH on flows in train directory, while results on flows in test directory are ignored.
+> 
+> In general, to generate N_train and N_test flow matrices, use `--nfiles <N_train+N_test>` and copy json files for first N_train flow matrices to `data_train/abilene_clustertrain/train/abilene` and all files for last N_test flow matrices to `data_train/abilene_test/train/abilene`.
 
 #### 5. Test SAMAROH model and record resulting states and greedy actions, thus making a dataset for training PεN, k-NN, Centroids
 
@@ -56,7 +52,7 @@ All paths below will be specified relative to this directory, until it is said t
 
 #### 7. Train and test PεN, k-NN, Centroids classifiers on the recorded dataset
 
-For PεN, run following command for `<value>` in [0, 0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10]:
+For PεN, run following command for `<value>` in [0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 20, 30, 40]:
 
 `python main.py --config config_abilene.yaml --dist-percentile <value>`
 
@@ -84,13 +80,13 @@ Results will appear in a new subdirectory of `representatives/baselines/results`
 
 #### 9. Plot accuracy and coverage of classifiers on test data
 
-Go back to `representatives` directory in the repository root
+Go back to `representatives` directory in the repository root.
 
 List the experiment directories to be plotted in `plot2d_input.json` (see format example in `plot2d_input_abilene_example.json`), and run:
 
 `python plot2d.py -i plot2d_input.json`
 
-This will reproduce **Figure 3** in the paper. It will also output a .csv file with all data shown on the plots, from which **Table 2** in the paper can be reproduced.
+This will reproduce **Figure 3** in the paper. It will also output a .csv file with all data shown on the plots, from which **Table A1** in the paper can be reproduced.
 
 #### 10. Aggregate and compare results of multiple experiments
 
@@ -100,15 +96,15 @@ Run:
 
 `python table.py -i table_config.yaml`
 
-Running `table.py` on results of PεN experiments for dist_percentile values 0.5 and 1 will reproduce **Table 10** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
+Running `table.py` on results of PεN experiments for dist_percentile values 0.5 and 1 will reproduce **Table A5** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
 
 #### 11. Go back to `maroh` directory in the root of this repository
 
 #### 12. Test a two-layer method with SAMAROH model and PεN classifier as the experience layer
 
-For each distance percentile value `<value>` in [0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10] do the following:
+For each distance percentile value `<value>` in [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 40] do the following:
 
-* Copy `reprs_*.npz` files from corresponding experiment's directory (located at `../representatives/results/epsilon_net_full_p<value>_...`) into `representatives_abilene_p<value>` directory (inside maroh directory);
+* Either edit `data_train/abilene_test/config_p<value>.yaml` so that `representatives_path` field contains exact path to experiment results directory `../representatives/results/epsilon_net_full_p<value>_...`, or rename that directory to match the path already specified in `config_p<value>.yaml`;
 
 * Run an experiment:
 `python main.py data_train/abilene_test -t -c _p<value> --seed 123 -m data_train/abilene_train/model`
@@ -125,7 +121,7 @@ For k-NN and Centroids activating on all iterations (`<value>` = 0) or after i-t
 
 `python main.py data_train/abilene_test -t -c _centroids<value> --seed 123 -m data_train/abilene_train/model`
 
-These experiments will use training data from path `../representatives/train_abilene` relative to `maroh` directory root, so make sure that `maroh` and `representatives` directories are located in same directory.
+These experiments will use training data from path `../representatives/train_abilene` relative to `maroh` directory root, so make sure that `maroh` and `representatives` directories are located in same directory (or edit `representatives_path` values in corresponding `data_train/abilene_test/config_....yaml` config files).
 
 #### 14. Prepare experience layer for testing SAMAROH-2L method (with clustering)
 
@@ -151,9 +147,23 @@ Run:
 
 `python plot_advanced.py -i plot_advanced_input.json`
 
-This will reproduce **Tables 4-5** (but for single experimental run instead of 12) and **Figures 5 and 6** in the paper.
+This will reproduce **Tables 2 and A3** and **Figures 5 and 6** in the paper (but for single experimental run instead of 12).
 
-To reproduce **Tables 4-5** in the paper exactly, run steps 1-7 and 9-16 12 times independently (without running k-NN and Centroids in step 7), but generating N_train=1000 and N_test=1000 (instead of 2000) flow matrices at step 4, and specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified. Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
+<blockquote>
+To reproduce <b>Tables 2 and A3</b> and <b>Figures 5 and 6</b> in the paper exactly, run steps 1-7 and 9-16 12 times independently (without running k-NN and Centroids in step 7) with the following differences:
+
+* generating N_train=1000 and N_test=1000 (instead of 1000 and 2000 respectively) flow matrices at step 4;
+
+* using `abilene_rec_2000` and `abilene_test_2000` directories in `maroh/data_train`, instead of `abilene_rec` and `abilene_test`;
+
+* putting datasets into `representatives/train_abilene1` and `representatives/test_abilene1` instead of `representatives/train_abilene` and `representatives/test_abilene`, and using `representatives/config_abilene_2000.yaml` instead of `representatives/config_abilene.yaml` at step 7.
+
+* specifying `--seed` in each run with a value from [151, 152, 161, 162, 171, 172, 181, 182, 191, 192, 201, 202] in each command where `--seed` is specified.
+
+Then concatenate tables from 12 .csv files produced by `plot_advanced.py` for each run, and calculate mean and standard deviation (ddof=1) for groups of rows sharing same value of `classifier` column.
+
+To reproduce <b>Figures 5 and 6</b> using data from all 12 runs, run `python plot_advanced_multitry.py -i plot_advanced_multitry_input.json`, filling `plot_advanced_multitry_input.json` like `plot_advanced_input.json` but using a wildcard instead of each path, specifying all directories at once (see example in `plot_advanced_multitry_input_abilene_example.json`) (note that set of paths from each wildcard will be sorted lexicographically inside `plot_advanced_multitry.py`).
+</blockquote>
 
 #### 17. Update trained PεN classifier by steps to measure update time
 
@@ -171,13 +181,13 @@ Run:
 
 `python update_time_analysis.py -i update_time_analysis_input.json`
 
-This will reproduce **Table 9** in the paper.
+This will reproduce **Table A6** in the paper.
 
 ### B. Experiments on Geant2009 topology
 
 The procedure is same as for Abilene topology (with difference in parameter values and directory paths), except that some experiments were not conducted on Geant2009 topology.
 
-Use Abilene instructions with the following differences:
+Use instructions for Abilene as above, but with the following differences:
 * Replace "abilene" to "geant2009" in every instruction.
 * Command for generating MAROH training flows dataset (step 2) is:
 
@@ -198,3 +208,5 @@ Use Abilene instructions with the following differences:
 * Geant2009 experiments used different values of PεN's distance percentile and SAMAROH-2L's Δ parameter, they can be found in the paper (or in config file names in `data_train/geant2009_test`, `data_train/geant2009_clustertrain`). For step 13, note that Geant2009 experiments used K=5 (number of message iterations).
 
 * Experiments at steps 17-18 were not conducted on Geant2009 topology in the paper.
+
+This will reproduce **Tables 3, A2, A4** and **Figures 4, 7, 8** in the paper.

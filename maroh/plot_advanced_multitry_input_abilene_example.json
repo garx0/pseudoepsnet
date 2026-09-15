@@ -1,0 +1,59 @@
+{
+    "exp_dir_nomemory": "vm*/abilene_rec*/exp_",
+    "flows_solver_ecmp": "vm*/abilene_test*/train/abilene",
+    "exp_dirs_names": [
+        ["vm*/abilene_test*/exp_p40",
+        "PεN (p=40%)"],
+
+        ["vm*/abilene_test*/exp_p20",
+        "PεN (p=20%)"],
+
+        ["vm*/abilene_test*/exp_p10",
+        "PεN (p=10%)"],
+
+        ["vm*/abilene_test*/exp_p5",
+        "PεN (p=5%)"],
+
+        ["vm*/abilene_test*/exp_p2",
+        "PεN (p=2%)"],
+
+        ["vm*/abilene_test*/exp_p1",
+        "PεN (p=1%)"],
+
+        ["vm*/abilene_test*/exp_p0.5",
+        "PεN (p=0.5%)"],
+
+        ["vm*/abilene_test*/exp_p0.25",
+        "PεN (p=0.25%)"],
+
+        ["vm*/abilene_test*/exp_p0.1",
+        "PεN (p=0.1%)"],
+
+        ["vm*/abilene_test*/exp_p0.05",
+        "PεN (p=0.05%)"],
+
+        ["vm*/abilene_test*/exp_centroids0",
+        "Centroids"],
+
+        ["vm*/abilene_test*/exp_centroids1",
+        "Centroids (after 0th it.)"],
+
+        ["vm*/abilene_test*/exp_centroids2",
+        "Centroids (after 1st it.)"],
+
+        ["vm*/abilene_test*/exp_knn0",
+        "KNN"],
+
+        ["vm*/abilene_test*/exp_knn1",
+        "KNN (after 0th it.)"],
+
+        ["vm*/abilene_test*/exp_knn2",
+        "KNN (after 1st it.)"],
+
+        ["vm*/abilene_test*/exp_cluster0.003",
+        "SAMAROH-2L (Δ=0.003)"],
+
+        ["vm*/abilene_test*/exp_cluster0.004",
+        "SAMAROH-2L (Δ=0.004)"]
+    ]
+}

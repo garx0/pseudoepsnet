@@ -2,7 +2,7 @@
 
 from .base import BaseClassifier, ClassifierFactory
 from .metrics import MetricSpace
-from .utils import Representative, ClassificationResult, EvaluationMetrics
+from .utils import ClassificationResult, EvaluationMetrics
 from .epsilon_net import EpsilonNetClassifier
 from .knn import kNNClassifier
 from .centroids import CentroidsClassifier

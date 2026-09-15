@@ -68,22 +68,22 @@ class BaseClassifier(ABC):
         if update_buffer_length is not None:
             X_update, y_update = X[for_update], y[for_update]
             period = np.searchsorted(np.cumsum(for_update), update_buffer_length+1)
-            print(f"From {period} points accumulated {np.sum(for_update[:period])} points for update")
+            # print(f"From {period} points accumulated {np.sum(for_update[:period])} points for update")
             n_updates = 0
             update_durations = []
             while update_buffer_length <= len(X_update):
                 X_batch, y_batch = X_update[:update_buffer_length], y_update[:update_buffer_length]
                 t = self.update(X_batch, y_batch)
                 update_durations.append(t)
-                print(f"update: {t*1000000:.3f} µs")
+                # print(f"update: {t*1000000:.3f} µs")
                 n_updates += 1
-                if max_updates is not None and n_updates >= max_updates:
+                if (max_updates is not None and n_updates >= max_updates) or len(X_update) <= update_buffer_length:
                     break
                 X_update, y_update = X_update[update_buffer_length:], y_update[update_buffer_length:]
                 pred_labels2, confidences2, are_confident2, are_covered2, confidences_raw2, for_update2 = self.predict(X_update)
                 X_update, y_update = X_update[for_update2], y_update[for_update2]
                 period = np.searchsorted(np.cumsum(for_update2), update_buffer_length+1)
-                print(f"From {period} points accumulated {np.sum(for_update2[:period])} points for update")
+                # print(f"From {period} points accumulated {np.sum(for_update2[:period])} points for update")
             print(f"Average update time: {np.mean(update_durations)*1000000:.3f} µs")
 
         preds_np = dict(pred=pred_labels, confidences=confidences, confident=are_confident,

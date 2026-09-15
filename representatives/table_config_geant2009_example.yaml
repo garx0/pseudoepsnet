@@ -1,0 +1,18 @@
+# Comparison of already completed experiments
+comparison:
+  name: "Comparison"
+  output_dir: "./compare_results/comparison_geant2009"
+
+  # Experiments to compare
+  experiments:
+    - name: "PεN (p=10%)"
+      path: "results/geant2009/epsilon_net_full_p10.0_train_geant2009"
+
+    - name: "PεN (p=5%)"
+      path: "results/geant2009/epsilon_net_full_p5.0_train_geant2009"
+
+    - name: "k-NN"
+      path: "results/geant2009/kNN_full_p5_train_geant2009"
+
+    - name: "Centroids"
+      path: "results/geant2009/centroids_full_p5_train_geant2009"

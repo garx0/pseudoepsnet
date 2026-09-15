@@ -146,12 +146,13 @@ def setup_output_directory(args):
     theta_str = "" if args.theta == 0. else f"_theta{args.theta}"
     no_antireprs_str = "" if not hasattr(args, 'disable_antireprs') or not args.disable_antireprs else "_noantireprs"
     no_adaptrad_str = "" if not hasattr(args, 'disable_adaptive_radius') or not args.disable_adaptive_radius else "_staticrad"
+    upd_str = "" if not hasattr(args, "update") or not args.update else f"_update_{args.update_buffer_length}"
     if args.mode == 'single':
         exp_name = f"{args.classifier}_agent{args.agent}_iter{args.iteration}{theta_str}_p{args.dist_percentile}_"\
-                   f"{args.data_path}{no_antireprs_str}{no_adaptrad_str}_{timestamp}"
+                   f"{args.data_path}{no_antireprs_str}{no_adaptrad_str}{upd_str}_{timestamp}"
     else:
         exp_name = f"{args.classifier}_full{theta_str}_p{args.dist_percentile}_"\
-                   f"{args.data_path}{no_antireprs_str}{no_adaptrad_str}_{timestamp}"
+                   f"{args.data_path}{no_antireprs_str}{no_adaptrad_str}{upd_str}_{timestamp}"
 
     args.output_dir = os.path.join(args.output_dir, exp_name)
 

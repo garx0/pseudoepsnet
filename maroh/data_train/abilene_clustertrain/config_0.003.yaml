@@ -1,5 +1,5 @@
 hash_function: dte_stand.hash_function.RandomHashFunction2
-algorithm: dte_stand.algorithm.Mate2LAlgorithm
+algorithm: dte_stand.algorithm.MateAlgorithm
 path_calculator: dte_stand.paths.DAGCalculator
 phi: dte_stand.phi_calculator.PhiCalculator.calculate_max_util
 

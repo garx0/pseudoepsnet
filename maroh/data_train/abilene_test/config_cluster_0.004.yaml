@@ -35,7 +35,7 @@ alg_cfg:
     states_logging: True
 
   horizons: 25
-  episodes: 2000
+  episodes: 1000
   eval_period: 25000
   change_sample_period: 1
   gamma: 0.75

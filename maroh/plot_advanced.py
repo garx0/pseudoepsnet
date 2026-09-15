@@ -112,7 +112,7 @@ def get_ecmp_value(ecmp_dir, t=0, full=False):
     ecmp_dir = Path(ecmp_dir)
     ecmp_values = []
     i = 0
-    for flows_filename in glob.glob(str(ecmp_dir / "flows*.json")):
+    for flows_filename in sorted(glob.glob(str(ecmp_dir / "flows*.json"))):
         flows_path = Path(flows_filename)
         flows_name = flows_path.stem
         flows_ecmp_result_file = sorted(glob.glob(str(ecmp_dir / f"{flows_name}-ecmp-1-{t}*.npz")))[-1]
@@ -130,7 +130,7 @@ def get_opt_value(opt_dir, t=0, full=False):
     opt_dir = Path(opt_dir)
     values = []
     i = 0
-    for flows_filename in glob.glob(str(opt_dir / "flows*.json")):
+    for flows_filename in sorted(glob.glob(str(opt_dir / "flows*.json"))):
         flows_path = Path(flows_filename)
         flows_name = flows_path.stem
         flows_result_file = sorted(glob.glob(str(opt_dir / f"{flows_name}-opt-{t}*.npy")))[-1]
@@ -426,6 +426,7 @@ if __name__ == "__main__":
     phi_comparison_arrays = []
     phi_comparisons_nomem = (phi_nomem - phi_opt) / (phi_ecmp - phi_opt)
 
+
     for exp_dir, exp_name in zip(exp_dirs, exp_names):
         _, values, _, _, _, _ = load_data([exp_dir], ["phi_values", "messages_agents", "actions_gr", "actions_gr_true"])
         phi = np.array(values[0]["phi_values"])[:n_episodes_use]
@@ -441,6 +442,12 @@ if __name__ == "__main__":
 
 
     median_fontsize = 8.5 if len(exp_dirs) < 19 else 7.5
+    if len(exp_dirs) < 19:
+        median_fontsize = 8.5
+    elif len(exp_dirs) < 23:
+        median_fontsize = 7.5
+    else:
+        median_fontsize = 6.5
 
     plt.figure(figsize=(10,5), dpi=300)
     bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], tick_labels=["solver", "no memory"] + exp_names + ["ECMP"],

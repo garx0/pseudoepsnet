@@ -19,9 +19,10 @@ def load_experiment(dirpath: str):
         return json.load(f)
 
 def get_exp_name(exp_folder):
-    m = re.match("(.+)_full(.*)_p([^_]+)_(.+)_2026.+", exp_folder)
+    exp_folder_nodate = re.sub(r"_202\d{5}_\d{6}", "", exp_folder)
+    m = re.match("(.+)_full(.*)_p([^_]+)_(.+)", exp_folder_nodate)
     if m is None:
-        exp_name = exp_folder
+        exp_name = exp_folder_nodate
     else:
         algo, _, percentile, misc = m.groups()
         if "knn" in algo.lower() or "centroids" in algo.lower():

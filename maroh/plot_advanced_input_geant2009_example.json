@@ -1,24 +1,30 @@
 {
     "exp_dir_nomemory": "data_train/geant2009_rec/exp_2026-07-25,17-20-49.738__non-sa",
     "flows_solver_ecmp": "data_train/geant2009_test/train/geant2009",
-    "centroids_exp_dir": "../representatives/results/geant2009/centroids_full_p5_traing_500_20260726_121511",
+    "centroids_exp_dir": "../representatives/results/geant2009/centroids_full_p5_train_geant2009",
     "exp_dirs_names": [
-        ["data_train/geant2009_test/exp_2026-07-26,18-52-47.362_p10_non-sa",
+        ["data_train/geant2009_test/exp_p40",
+        "PεN (p=40%)"],
+
+        ["data_train/geant2009_test/exp_p20",
+        "PεN (p=20%)"],
+
+        ["data_train/geant2009_test/exp_p10",
         "PεN (p=10%)"],
 
-        ["data_train/geant2009_test/exp_2026-07-26,12-55-40.620_p2_non-sa",
-        "PεN (p=2%)"],
+        ["data_train/geant2009_test/exp_p5",
+        "PεN (p=5%)"],
 
-        ["data_train/geant2009_test/exp_2026-07-26,14-08-57.124_p0.5_non-sa",
-        "PεN (p=0.5%)"],
+        ["data_train/geant2009_test/exp_p1",
+        "PεN (p=1%)"],
 
-        ["data_train/geant2009_test/exp_2026-07-26,12-56-15.839_p0.25_non-sa",
+        ["data_train/geant2009_test/exp_p0.25",
         "PεN (p=0.25%)"],
 
-        ["data_train/geant2009_test/exp_2026-07-26,12-59-00.053_p0.1_non-sa",
+        ["data_train/geant2009_test/exp_p0.1",
         "PεN (p=0.1%)"],
 
-        ["data_train/geant2009_test/exp_2026-07-26,13-05-55.647_p0.05_non-sa",
+        ["data_train/geant2009_test/exp_p0.05",
         "PεN (p=0.05%)"],
 
         ["data_train/geant2009_test/exp_2026-07-26,14-11-23.756_centroids0_non-sa",

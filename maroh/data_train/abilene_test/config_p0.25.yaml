@@ -29,12 +29,12 @@ alg_cfg:
     use_gat: False
     use_memory: True
     memory_type: 'epsilon_net'
-    representatives_path: 'representatives_abilene_p0.25'
+    representatives_path: '../representatives/results/epsilon_net_full_p0.25_train_abilene'
     all_agents: False
     states_logging: True
 
   horizons: 25
-  episodes: 2000
+  episodes: 1000
   eval_period: 25000
   change_sample_period: 1
   gamma: 0.75

@@ -45,9 +45,10 @@ class EpsilonNetClassifier(BaseClassifier):
         self.verbose = config.verbose
         self.agent = agent
         self.iteration = iteration
-
+        self.use_antireprs = not config.disable_antireprs if hasattr(config, 'disable_antireprs') else True
+        self.use_adaptive_radius = not config.disable_adaptive_radius if hasattr(config, 'disable_adaptive_radius') else True
+        self.ndim = None
         # State
-        self.representatives: List[Representative] = []
         self.dists = None
         self.searcher_construct = lambda: SearcherFactory.create(config.searcher,
                                                metric = self.metric,
@@ -131,7 +132,8 @@ class EpsilonNetClassifier(BaseClassifier):
             return min_dist_to_other
 
 
-    def _create_uncertainty_representatives(self, class_points: Dict[int, np.ndarray], min_radius: float) -> List[Representative]:
+    def _create_uncertainty_representatives(self, class_points: Dict[int, np.ndarray], min_radius: float,
+        min_dist_to_other: Dict[int, np.ndarray]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Create anti-representatives in areas where classes are close together
 
@@ -141,69 +143,47 @@ class EpsilonNetClassifier(BaseClassifier):
         Returns:
             list of anti-representatives
         """
-        uncertainty_reprs = []
+        antirepr_centers = np.empty((0, self.ndim), dtype=float)
 
         # For each pair of classes
         classes = list(class_points.keys())
         classes = sorted(classes, key=lambda c: len(class_points[c]))
+        for i, label_a in enumerate(classes[:-1]):
+            antirepr_centers = np.append(antirepr_centers,
+                class_points[label_a][min_dist_to_other[label_a] < min_radius], axis=0)
 
-        for i, label_a in enumerate(classes):
-            for label_b in classes[i+1:]:
-                points_a = class_points[label_a]
-                points_b = class_points[label_b]
+        antirepr_labels = np.full(len(antirepr_centers), -1, dtype=int)
+        antirepr_radiuses = np.full(len(antirepr_centers), min_radius, dtype=float)
 
-                # Find areas where classes are close
-                # For each point from A find distance to nearest point from B
-                if len(points_b) > 1000:
-                    tree_b = BallTree(points_b, metric=self.metric.metric_name_sklearn)
-                    dists, _ = tree_b.query(points_a, k=1)
-                    dists = dists.flatten()
-                else:
-                    dists = np.min(pairwise_distances(points_a, points_b, metric=self.metric.metric_name_sklearn), axis=1)
-                close_mask = dists < min_radius
+        return antirepr_centers, antirepr_labels, antirepr_radiuses
 
-                # Points that are too close to another class
-                close_points = points_a[close_mask]
-                close_dists = dists[close_mask]
-
-                # Add anti-representatives
-                for point in close_points:
-                    uncertainty_reprs.append(Representative(
-                        center=point,
-                        epsilon=min_radius,
-                        label=-1  # special label for uncertainty
-                    ))
-
-        return uncertainty_reprs
-
-    def _merge_antireprs(self, antireprs: List[Representative]) -> List[Representative]:
+    def _merge_antireprs(self, antirepr_centers: np.ndarray, antirepr_labels: np.ndarray, antirepr_radiuses: np.ndarray) \
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Remove anti-representatives whose centers lie inside others"""
-        if len(antireprs) <= 1:
-            return antireprs
+        if len(antirepr_centers) <= 1:
+            return antirepr_centers, antirepr_labels, antirepr_radiuses
 
-        keep = np.zeros(len(antireprs), dtype=bool)
-        antireprs_centers = np.array([a.center for a in antireprs])
-        antireprs_radiuses = np.array([a.epsilon for a in antireprs])
-        for r1_idx, r1 in enumerate(antireprs):
+        keep = np.zeros(len(antirepr_centers), dtype=bool)
+        for r1_idx, r1_center in enumerate(antirepr_centers):
             # Check if r1's center is inside any already kept
-            if not np.any(keep) or np.all(self.metric(r1.center, antireprs_centers[keep]) > antireprs_radiuses[keep]):
+            if not np.any(keep) or np.all(self.metric(r1_center, antirepr_centers[keep]) > antirepr_radiuses[keep]):
                 keep[r1_idx] = True
-        return [antireprs[i] for i in np.where(keep)[0]]
+        return antirepr_centers[keep], antirepr_labels[keep], antirepr_radiuses[keep]
 
-    def _filter_points_with_dists(self, points: np.ndarray, dists: np.ndarray, class_label: int, antireprs) -> Tuple[np.ndarray, np.ndarray]:
+    def _filter_points_with_dists(self, points: np.ndarray, dists: np.ndarray, class_label: int,
+        antirepr_centers: np.ndarray, antirepr_radiuses: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Remove points falling into anti-representatives, and synchronously filter distances"""
-        if len(antireprs) == 0:
+        if len(antirepr_centers) == 0:
             return points, dists
 
         keep = np.ones(len(points), dtype=bool)
-        antireprs_centers = np.array([a.center for a in antireprs])
-        antireprs_radiuses = np.array([a.epsilon for a in antireprs])
-        dists_to_a = pairwise_distances(points, antireprs_centers)
-        keep = np.all(dists_to_a > antireprs_radiuses, axis=1)
+        dists_to_a = pairwise_distances(points, antirepr_centers)
+        keep = np.all(dists_to_a > antirepr_radiuses, axis=1)
 
         return points[keep], dists[keep]
 
-    def _build_greedy(self, points: np.ndarray, dists_to_other: np.ndarray, epsilon: float, class_label: int) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+    def _build_greedy(self, points: np.ndarray, dists_to_other: np.ndarray, epsilon: float, class_label: int) \
+        -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """Greedy algorithm for building pseudo-ε-net"""
         n = len(points)
         if n == 0:
@@ -230,8 +210,11 @@ class EpsilonNetClassifier(BaseClassifier):
                 if sorted_dists_to_other is not None:
                     dist_to_other = remaining_dists[0]
 
-                    # Radius = distance to other class, but not less than epsilon
-                    radius = max(epsilon, dist_to_other * 0.95)  # 0.95 - margin
+                    if self.use_adaptive_radius:
+                        # Radius = distance to other class, but not less than epsilon
+                        radius = max(epsilon, dist_to_other * 0.95 / 2)  # 0.95 - margin
+                    else:
+                        radius = epsilon
                 representatives.append(rep)
                 radiuses.append(radius)
                 remaining_idx = remaining_idx[1:]
@@ -264,7 +247,10 @@ class EpsilonNetClassifier(BaseClassifier):
                     dist_to_other = remaining_dists[0]
 
                     # Radius = distance to other class, but not less than epsilon
-                    radius = max(epsilon, dist_to_other * 0.95)  # 0.95 - margin
+                    if self.use_adaptive_radius:
+                        radius = max(epsilon, dist_to_other * 0.95 / 2)  # 0.95 - margin
+                    else:
+                        radius = epsilon
                 representatives.append(rep)
                 radiuses.append(radius)
                 remaining = remaining[1:]
@@ -280,6 +266,15 @@ class EpsilonNetClassifier(BaseClassifier):
 
         return representatives, radiuses
 
+    def _append_representatives(self, repr_centers, repr_labels, repr_radiuses):
+        self.repr_centers = np.append(self.repr_centers, repr_centers, axis=0)
+        self.repr_labels = np.append(self.repr_labels, repr_labels, axis=0)
+        self.repr_radiuses = np.append(self.repr_radiuses, repr_radiuses, axis=0)
+
+    def _append_antireprs(self, antirepr_centers, antirepr_radiuses):
+        self._antirepr_centers = np.append(self._antirepr_centers, antirepr_centers, axis=0)
+        self._antirepr_radiuses = np.append(self._antirepr_radiuses, antirepr_radiuses, axis=0)
+
     def fit(self, X: np.ndarray, y: np.ndarray) -> 'EpsilonNetClassifier':
         """
         Train classifier (build ε-net)
@@ -291,6 +286,8 @@ class EpsilonNetClassifier(BaseClassifier):
             self for method chaining
         """
         self.train_len = len(X)
+        self.ndim = X.shape[1]
+
         # Group by class
         class_points = {}
         for label in np.unique(y):
@@ -303,18 +300,29 @@ class EpsilonNetClassifier(BaseClassifier):
         self.percentile_dist_to_other = percentile_dist_to_other
 
         # Build network for each class
-        self.representatives = []
+        self.repr_centers = np.empty((0, self.ndim), dtype=float)
+        self.repr_labels = np.empty(0, dtype=int)
+        self.repr_radiuses = np.empty(0, dtype=float)
         rad = max([self.percentile_dist_to_other.get(x, 1.0) for x in class_points.keys()])
-        antireprs = self._create_uncertainty_representatives(class_points, rad)
-        antireprs = self._merge_antireprs(antireprs)
-        self._antireprs = antireprs
-        self.representatives.extend(antireprs)
-        if self.verbose:
-            print(f"  Added {len(antireprs)} anti-representatives")
+        if self.use_antireprs:
+            antirepr_centers, antirepr_labels, antirepr_radiuses = \
+                self._create_uncertainty_representatives(class_points, rad, min_dist_to_other)
+            antirepr_centers, antirepr_labels, antirepr_radiuses = \
+                self._merge_antireprs(antirepr_centers, antirepr_labels, antirepr_radiuses)
+            self._antirepr_centers = antirepr_centers
+            self._antirepr_radiuses = antirepr_radiuses
+            self._append_representatives(antirepr_centers, antirepr_labels, antirepr_radiuses)
+            if self.verbose:
+                print(f"  Added {len(antirepr_centers)} anti-representatives")
+        else:
+            self._antirepr_centers = np.empty((0, self.ndim), dtype=float)
+            self._antirepr_radiuses = np.empty(0, dtype=float)
+
 
         for label, points in class_points.items():
             dists = min_dist_to_other[label]
-            points, dists = self._filter_points_with_dists(points, dists, label, self._antireprs)
+            if self.use_antireprs:
+                points, dists = self._filter_points_with_dists(points, dists, label, self._antirepr_centers, self._antirepr_radiuses)
 
             if len(points) == 0:
                 continue
@@ -322,20 +330,13 @@ class EpsilonNetClassifier(BaseClassifier):
             # Update _min_dist_to_other for this class
             min_dist_to_other[label] = dists
             eps = (1 - self.delta) * percentile_dist_to_other.get(label, 1.0) / 2
-            repr_points, radiuses = self._build_greedy(points, dists, eps, label)
+            repr_centers, repr_radiuses = self._build_greedy(points, dists, eps, label)
+            repr_labels = np.full(len(repr_centers), label, dtype=int)
+            self._append_representatives(repr_centers, repr_labels, repr_radiuses)
 
-            for p, r in zip(repr_points, radiuses):
-                self.representatives.append(Representative(
-                    center=p, epsilon=r, label=label
-                ))
-
-        repr_points = np.array([rep.center for rep in self.representatives])
-        repr_radiuses = np.array([rep.epsilon for rep in self.representatives])
-        self.searcher.fit(repr_points, repr_radiuses)
+        self.searcher.fit(self.repr_centers, self.repr_radiuses)
 
         return self
-
-    # ================== Classification ==================
 
     def update(self, X, y):
         t_start = datetime.now()
@@ -349,19 +350,26 @@ class EpsilonNetClassifier(BaseClassifier):
         # Distances between classes
         min_dist_to_other = self._distance_between_classes(class_points, calc_percentile=False)
 
+        if self.ndim is None:
+            self.ndim = X.shape[1]
+
         # Build network for each class
         rad = max([self.percentile_dist_to_other.get(x, 1.0) for x in class_points.keys()])
-        antireprs = self._create_uncertainty_representatives(class_points, rad)
-        antireprs = self._merge_antireprs(antireprs)
-        self._antireprs.extend(antireprs)
-        self.representatives.extend(antireprs)
-        if self.verbose:
-            print(f"  Added {len(antireprs)} anti-representatives")
+        if self.use_antireprs:
+            antirepr_centers, antirepr_labels, antirepr_radiuses = \
+                self._create_uncertainty_representatives(class_points, rad, min_dist_to_other)
+            antirepr_centers, antirepr_labels, antirepr_radiuses = \
+                self._merge_antireprs(antirepr_centers, antirepr_labels, antirepr_radiuses)
+            self._append_antireprs(antirepr_centers, antirepr_radiuses)
+            self._append_representatives(antirepr_centers, antirepr_labels, antirepr_radiuses)
+            # if self.verbose:
+                # print(f"  Added {len(antirepr_centers)} anti-representatives")
 
         repr_points_added = 0
         for label, points in class_points.items():
             dists = min_dist_to_other[label]
-            points, dists = self._filter_points_with_dists(points, dists, label, antireprs)
+            if self.use_antireprs:
+                points, dists = self._filter_points_with_dists(points, dists, label, antirepr_centers, antirepr_radiuses)
 
             if len(points) == 0:
                 continue
@@ -369,29 +377,24 @@ class EpsilonNetClassifier(BaseClassifier):
             # Update _min_dist_to_other for this class
             min_dist_to_other[label] = dists
             eps = (1 - self.delta) * self.percentile_dist_to_other.get(label, 1.0) / 2
-            repr_points, radiuses = self._build_greedy(points, dists, eps, label)
-            repr_points_added += len(repr_points)
-            for p, r in zip(repr_points, radiuses):
-                self.representatives.append(Representative(
-                    center=p, epsilon=r, label=label
-                ))
+            repr_centers, repr_radiuses = self._build_greedy(points, dists, eps, label)
+            repr_labels = np.full(len(repr_centers), label, dtype=int)
+            repr_points_added += len(repr_centers)
+            self._append_representatives(repr_centers, repr_labels, repr_radiuses)
         t_end = datetime.now()
-        if self.verbose:
-            print(f"  Added {repr_points_added} representatives")
+        # if self.verbose:
+            # print(f"  Added {repr_points_added} representatives")
 
 
-        repr_points = np.array([rep.center for rep in self.representatives])
-        repr_radiuses = np.array([rep.epsilon for rep in self.representatives])
         self.searcher = self.searcher_construct()
-        self.searcher.fit(repr_points, repr_radiuses)
+        self.searcher.fit(self.repr_centers, self.repr_radiuses)
 
         self.train_len += len(X)
         return (t_end - t_start).total_seconds()
 
-    def _find_nearest(self, X) -> Tuple[List[Representative], np.ndarray]:
+    def _find_nearest(self, X) -> Tuple[np.ndarray, np.ndarray]:
         reps_idx, dists = self.searcher(X)
-        reps = [self.representatives[i] for i in reps_idx]
-        return reps, dists
+        return reps_idx, dists
 
     def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -401,48 +404,48 @@ class EpsilonNetClassifier(BaseClassifier):
             (predicted_classes, confidences, whether_classification_was_confident,
             whether_points_are_covered_by_balls, raw_confidences)
         """
-        reps, dists = self._find_nearest(X)
-        are_covered = np.array([rep is not None and d < rep.epsilon and rep.label != -1 for rep, d in zip(reps, dists)])
+        # reps, dists = self._find_nearest(X)
+        reps_idx, dists = self._find_nearest(X)
+        repr_radiuses = self.repr_radiuses[reps_idx]
+        repr_labels = self.repr_labels[reps_idx]
+        are_covered = (dists < repr_radiuses) & (repr_labels >= 0)
 
         pred = np.zeros(len(X), dtype=int)
         confidences = np.zeros(len(X), dtype=float)
         confidences_raw = np.zeros(len(X), dtype=float)
         are_confident = np.zeros(len(X), dtype=bool)
         for_update = np.zeros(len(X), dtype=bool)
-        for i, (point, rep, dist) in enumerate(zip(X, reps, dists)):
-            if rep is None: # currently impossible
+        # for i, (point, rep, dist) in enumerate(zip(X, reps, dists)):
+        for i, (point, rad, label, dist) in enumerate(zip(X, repr_radiuses, repr_labels, dists)):
+            if rad > 0:
+                confidence = 1 - dist / rad
+            else:
+                confidence = 1.0 if dist == 0 else 0.0
+            confidences_raw[i] = confidence if label != -1 else 0.
+            # fell into radius and label >= 0
+            if confidence >= self.theta and label != -1:
+                pred[i] = label
+                confidences[i] = confidence
+                are_confident[i] = True
+            else:
+                if confidence < self.theta:
+                    # didn't fall into anti-representative area or other representative area
+                    for_update[i] = True
                 pred[i] = -1
                 confidences[i] = 0.
-                confidences_raw[i] = 0.
                 are_confident[i] = False
-            else:
-                if rep.epsilon > 0:
-                    confidence = 1 - dist / rep.epsilon
-                else:
-                    confidence = 1.0 if dist == 0 else 0.0
-                confidences_raw[i] = confidence if rep.label != -1 else 0.
-                # fell into radius and label >= 0
-                if confidence >= self.theta and rep.label != -1:
-                    pred[i] = rep.label
-                    confidences[i] = confidence
-                    are_confident[i] = True
-                else:
-                    if confidence < self.theta:
-                        # didn't fall into anti-representative area or other representative area
-                        for_update[i] = True
-                    pred[i] = -1
-                    confidences[i] = 0.
-                    are_confident[i] = False
         return pred, confidences, are_confident, are_covered, confidences_raw, for_update
 
     def are_points_covered(self, points: np.ndarray) -> np.ndarray:
         """Check whether points are covered by balls"""
-        reps, dists = self._find_nearest(points)
-        return np.array([rep is not None and d < rep.epsilon and rep.label != -1 for rep, d in zip(reps, dists)])
+        reps_idx, dists = self._find_nearest(points)
+        repr_radiuses = self.repr_radiuses[reps_idx]
+        repr_labels = self.repr_labels[reps_idx]
+        return (dists < repr_radiuses) & (repr_labels >= 0)
 
     @property
     def n_representatives(self) -> int:
-        return len(self.representatives)
+        return len(self.repr_centers)
 
     @property
     def train_data_len(self) -> int:
@@ -461,33 +464,31 @@ class EpsilonNetClassifier(BaseClassifier):
             'n_representatives': self.n_representatives
         }
 
-    # def set_representatives(self, representatives: List[Representative]):
-    #     """Set ready representatives (without training)"""
-    #     self.representatives = representatives
-    #     repr_points = np.array([rep.center for rep in self.representatives])
-    #     repr_radiuses = np.array([rep.epsilon for rep in self.representatives])
-    #     self.searcher.fit(repr_points, repr_radiuses)
-    #     self.train_len = 0
-    #     return self
-
     def load_representatives(self, filename):
         """Load ready representatives from npz file"""
         print("loading representatives...")
+
         data = np.load(filename)
-        self.representatives = [Representative(center, radius, label) for
-            center, radius, label in zip(data["centers"], data["radiuses"], data["labels"])]
-        self.searcher.fit(data["centers"], data["radiuses"])
-        self._antireprs = [r for r in self.representatives if r.label == -1]
-        classes = sorted([x for x in np.unique(data["labels"]) if x >= 0])
+        self.repr_centers = np.array(data["centers"])
+        self.repr_radiuses = np.array(data["radiuses"])
+        self.repr_labels = np.array(data["labels"])
+        self.searcher.fit(self.repr_centers, self.repr_radiuses)
+        self._antirepr_centers = self.repr_centers[self.repr_labels == -1]
+        self._antirepr_radiuses = self.repr_radiuses[self.repr_labels == -1]
+        classes = sorted([x for x in np.unique(self.repr_labels) if x >= 0])
         self.percentile_dist_to_other = dict(zip(classes, data["percentiles"]))
         self.train_len = data["train_len"][0]
-        print(f"loaded {len(self.representatives)} representatives")
+        if len(self.repr_centers) > 0:
+            self.ndim = self.repr_centers.shape[1]
+        else:
+            self.ndim = None
+
+        print(f"loaded {len(self.repr_centers)} representatives")
 
     def save_representatives(self, filename):
         """Save ready representatives to npz file"""
-        centers = np.array([r.center for r in self.representatives])
-        radiuses = np.array([r.epsilon for r in self.representatives])
-        labels = np.array([r.label for r in self.representatives])
-        classes = sorted([x for x in np.unique(labels) if x >= 0])
+
+        classes = sorted([x for x in np.unique(self.repr_labels) if x >= 0])
         percentiles = np.array([self.percentile_dist_to_other[k] for k in classes])
-        np.savez(filename, centers=centers, radiuses=radiuses, labels=labels, percentiles=percentiles, train_len=np.array([self.train_len]))
+        np.savez(filename, centers=self.repr_centers, radiuses=self.repr_radiuses,
+            labels=self.repr_labels, percentiles=percentiles, train_len=np.array([self.train_len]))

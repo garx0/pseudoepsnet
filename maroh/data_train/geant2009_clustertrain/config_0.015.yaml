@@ -31,7 +31,7 @@ alg_cfg:
     memory_type: 'cluster'
     memory_size: 2048
     threshold: 0.015
-    states_logging: False
+    states_logging: True
 
   horizons: 50
   episodes: 500

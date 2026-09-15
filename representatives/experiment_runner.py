@@ -134,8 +134,8 @@ def analyze_agent_iteration(
         class_distribution = defaultdict(int)
         to_update = False
         if args.classifier == 'epsilon_net':
-            for rep in clf.representatives:
-                class_distribution[rep.label] += 1
+            for label in clf.repr_labels:
+                class_distribution[label] += 1
             if hasattr(args, 'update'):
                 to_update = args.update
                 if to_update:

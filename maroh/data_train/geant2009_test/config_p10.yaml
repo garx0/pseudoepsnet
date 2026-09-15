@@ -29,7 +29,7 @@ alg_cfg:
     use_gat: False
     use_memory: True
     memory_type: 'epsilon_net'
-    representatives_path: 'representatives_geant2009_p10'
+    representatives_path: '../representatives/results/geant2009/epsilon_net_full_p10.0_train_geant2009'
     all_agents: False
     states_logging: True
 
