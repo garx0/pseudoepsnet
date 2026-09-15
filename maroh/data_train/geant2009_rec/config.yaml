@@ -5,7 +5,7 @@ phi: dte_stand.phi_calculator.PhiCalculator.calculate_max_util
 
 lsdb_period: 30000
 iterations: 1
-plot_period: 50
+plot_period: 500
 
 log_path: ./experiment.log
 log_level: DEBUG
