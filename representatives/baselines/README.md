@@ -4,7 +4,7 @@ This directory reproduces the comparison of Pseudo ε-Net with published externa
 prototype-based classifiers that is reported in the paper
 "Pseudo ε-Net Method with Delayed Decisions Based on Representatives and
 Anti-Representatives for Multi-Agent Stream Classification"
-(Table 2 for Abilene and 3 for Geant2009, and the
+(Figure 3 and Table A1 for Abilene, and Figure 4 and Table A2 for Geant2009, and the
 corresponding paragraph in the Discussion section).
 
 ## Methods (all implemented in `baselines.py`)
