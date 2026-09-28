@@ -96,7 +96,7 @@ Run:
 
 `python table.py -i table_config.yaml`
 
-Running `table.py` on results of PεN experiments for dist_percentile values 0.5 and 1 will reproduce **Table A5** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
+Running `table.py` on results of PεN experiments for dist_percentile values in [5, 10] will reproduce **Table A5** in the paper (need to specify `--no-last-iter` command line argument to reproduce same number of representatives and antirepresentatives however).
 
 #### 11. Go back to `maroh` directory in the root of this repository
 
@@ -167,7 +167,7 @@ To reproduce <b>Figures 5 and 6</b> using data from all 12 runs, run `python plo
 
 #### 17. Update trained PεN classifier by steps to measure update time
 
-For each `<dp>` in [0.5, 1], for each `<len>` in [4, 8, 16, 32, 64, 128, 256], run:
+For each `<dp>` in [5, 10], for each `<len>` in [4, 8, 16, 32, 64, 128, 256], run:
 
 `python main.py --config config_update.yaml --dist-percentile <dp> --reprs-path results/epsilon_net_full_p<dp>... --update --update-buffer-length <len> --max-updates 10`
 

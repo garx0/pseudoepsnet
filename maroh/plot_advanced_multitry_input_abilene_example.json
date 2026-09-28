@@ -42,13 +42,13 @@
         "Centroids (after 1st it.)"],
 
         ["vm*/abilene_test*/exp_knn0",
-        "KNN"],
+        "k-NN"],
 
         ["vm*/abilene_test*/exp_knn1",
-        "KNN (after 0th it.)"],
+        "k-NN (after 0th it.)"],
 
         ["vm*/abilene_test*/exp_knn2",
-        "KNN (after 1st it.)"],
+        "k-NN (after 1st it.)"],
 
         ["vm*/abilene_test*/exp_cluster0.003",
         "SAMAROH-2L (Δ=0.003)"],

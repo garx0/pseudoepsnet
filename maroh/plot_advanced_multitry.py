@@ -12,6 +12,75 @@ import networkx as nx
 import argparse
 plt.rcParams.update({'font.size': 9})
 
+ALGORITHM_COLORS = {
+    "PεN":        "#1f77b4",   # blue
+    "Centroids":  "#2ca02c",   # green
+    "k-NN":       "#d62728",   # red
+    "SAMAROH-2L": "#9467bd",   # purple
+}
+SPECIAL_COLORS = {
+    "solver":    "#000000",
+    "no memory": "#8B4513",   # saddle brown
+    "ECMP":      "#ff7f0e",
+}
+
+def algorithm_of(name):
+    """Return algorithm key based on prefix of the display name, or None."""
+    for alg in sorted(ALGORITHM_COLORS, key=len, reverse=True):
+        if name.startswith(alg):
+            return alg
+    return None
+
+def color_for(name):
+    """Color for a given display name (algorithm family or special)."""
+    if name in SPECIAL_COLORS:
+        return SPECIAL_COLORS[name]
+    alg = algorithm_of(name)
+    return ALGORITHM_COLORS.get(alg, "#333333")
+
+def _set_box_color(artist, color):
+    """Устанавливает цвет для artist (поддерживает и Line2D, и PathPatch)."""
+    if hasattr(artist, "set_edgecolor"):
+        artist.set_edgecolor(color)
+    if hasattr(artist, "set_facecolor"):
+        artist.set_facecolor(color)
+    if hasattr(artist, "set_color"):
+        artist.set_color(color)
+    if hasattr(artist, "set_alpha"):
+        artist.set_alpha(0.75)
+
+def style_boxplot(bp, labels, ax=None):
+    """Color boxes, whiskers, caps, medians, fliers and tick labels per label."""
+    ax = ax if ax is not None else plt.gca()
+    colors = [color_for(l) for l in labels]
+    for i, color in enumerate(colors):
+        # box
+        _set_box_color(bp['boxes'][i], color)
+        # whiskers
+        for w in (bp['whiskers'][2*i], bp['whiskers'][2*i+1]):
+            if hasattr(w, "set_color"):
+                w.set_color(color)
+        # caps
+        for c in (bp['caps'][2*i], bp['caps'][2*i+1]):
+            if hasattr(c, "set_color"):
+                c.set_color(color)
+        # median
+        med = bp['medians'][i]
+        if hasattr(med, "set_color"):
+            med.set_color(color)
+        if hasattr(med, "set_linewidth"):
+            med.set_linewidth(2.2)
+        # fliers
+        fl = bp['fliers'][i]
+        if hasattr(fl, "set_markerfacecolor"):
+            fl.set_markerfacecolor(color)
+        if hasattr(fl, "set_markeredgecolor"):
+            fl.set_markeredgecolor(color)
+    # tick label colors
+    for tick, color in zip(ax.get_xticklabels(), colors):
+        tick.set_color(color)
+        tick.set_fontweight('bold')
+
 class ResultFolder:
     def __init__(self, path, parameter_name='phi_values'):
         self._folder_path = path
@@ -449,15 +518,17 @@ if __name__ == "__main__":
 
     median_fontsize = 8.5 if len(exp_dirs_multi) < 19 else 7.5
 
+    labels1 = ["solver", "no memory"] + exp_names + ["ECMP"]
     plt.figure(figsize=(10,5), dpi=300)
-    bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], tick_labels=["solver", "no memory"] + exp_names + ["ECMP"],
+    bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], labels=labels1,
                     flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
+    style_boxplot(bp, labels1)
     medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
     for i, median in enumerate(medians, start=1):
-        plt.text(i, median, f'{median:.3f}', size=median_fontsize,
-                 ha='center', va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.5)
-             )
+        plt.annotate(f'{median:.3f}', xy=(i, median), xytext=(0, 4),
+             textcoords='offset points',
+             ha='center', va='bottom', color='black', size=median_fontsize,
+             bbox=dict(facecolor='white', edgecolor='none', alpha=0.5, boxstyle='square,pad=0.05'))
     plt.xticks(rotation=45, ha='right')
     plt.ylabel("phi")
     plt.grid()
@@ -466,15 +537,17 @@ if __name__ == "__main__":
     print(f"saved phi plot to {out_filename_plot1}.png")
     plt.close()
 
+    labels2 = ["no memory"] + exp_names
     plt.figure(figsize=(10,5), dpi=300)
-    bp = plt.boxplot([phi_comparisons_nomem] + phi_comparison_arrays, tick_labels=["no memory"] + exp_names,
+    bp = plt.boxplot([phi_comparisons_nomem] + phi_comparison_arrays, labels=labels2,
                     flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
+    style_boxplot(bp, labels2)
     medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
     for i, median in enumerate(medians, start=1):
-        plt.text(i, median, f'{median:.3f}', size=median_fontsize,
-                 ha='right', va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
-             )
+        plt.annotate(f'{median:.3f}', xy=(i, median), xytext=(0, 4),
+             textcoords='offset points',
+             ha='right', va='bottom', color='black', size=median_fontsize,
+             bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, boxstyle='square,pad=0.05'))
     plt.xticks(rotation=45, ha='right')
     plt.ylabel("phi position (solver—ECMP)")
     plt.ylim(0, 2)
@@ -483,118 +556,3 @@ if __name__ == "__main__":
     plt.savefig(out_filename_plot2, bbox_inches='tight')
     print(f"saved phi plot to {out_filename_plot2}.png")
     plt.close()
-
-    # acc_table_rows = []
-    # # classes = np.unique(actions_gr_true.flatten())
-    # classes = np.array([0, 1])
-    # classifier_data_sizes = {}
-    # for exp_dir, exp_name in zip(exp_dirs, exp_names):
-    #     _, values, _, _, _, _ = load_data([exp_dir], ["phi_values", "messages_agents", "actions_gr", "actions_gr_true"])
-    #     phi = np.array(values[0]["phi_values"])[:n_episodes_use]
-    #     msgs = np.array(values[0]["messages_agents"])[:n_episodes_use]
-    #     actions_gr = np.array(values[0]["actions_gr"])[:n_episodes_use]
-    #     actions_gr_true = np.array(values[0]["actions_gr_true"])[:n_episodes_use]
-    #     n_episodes = msgs.shape[0]
-    #     n_horizons = msgs.shape[1]
-    #     n_agents = msgs.shape[-1]
-    #
-    #     phi_comparisons = (phi - phi_opt) / (phi_ecmp - phi_opt)
-    #
-    #     msgs = msgs.reshape(n_episodes * n_horizons, *msgs.shape[2:])
-    #     n_msgs_sent, n_msgs_recv, n_msgs_sent_possible, n_msgs_recv_possible = calc_msgs_actual(msgs, n_msg_iter, neighbors_in, neighbors_out)
-    #     actions_gr = actions_gr.reshape(n_episodes * n_horizons, *actions_gr.shape[2:])
-    #     actions_gr_true = actions_gr_true.reshape(n_episodes * n_horizons, *actions_gr_true.shape[2:])
-    #
-    #     accuracy_stats, coverage_stats, accuracy, coverage = calc_accuracy(msgs, actions_gr, actions_gr_true, n_msg_iter)
-    #
-    #     print()
-    #     print(f"{exp_name}:")
-    #     msg_frac = msgs.mean() / n_msg_iter # fraction of exchange iterations done
-    #     msg_frac_actual = n_msgs_sent.sum(axis=1).mean() / n_msgs_sent_possible.sum(axis=1)[0] # fraction of exchanges done
-    #     msg_frac_actual2 = n_msgs_recv.sum(axis=1).mean() / n_msgs_recv_possible.sum(axis=1)[0] # fraction of exchanges done
-    #     assert msg_frac_actual == msg_frac_actual2
-    #
-    #     n_reprs_mean = np.nan
-    #     n_reprs_std = np.nan
-    #     try:
-    #         memory_type = get_config_value(exp_dir, "memory_type")
-    #         if memory_type is not None:
-    #             memory_type = memory_type.lower().replace("'", "").replace('"', '')
-    #             if memory_type == "epsilon_net":
-    #                 reprs_path = get_config_value(exp_dir, "representatives_path")
-    #                 if reprs_path is not None:
-    #                     reprs_path = reprs_path.strip()
-    #                     while reprs_path[0] == "'" or reprs_path[0] == '"':
-    #                         reprs_path = reprs_path[1:-1]
-    #                     lengths = []
-    #                     for agent in range(n_agents):
-    #                         for i in range(n_msg_iter):
-    #                             reprs = np.load(os.path.join(reprs_path, f"reprs_a{agent:02}_i{i}.npz"))
-    #                             lengths.append(len(reprs['centers']))
-    #                     n_reprs_mean = np.mean(lengths)
-    #                     n_reprs_std = np.std(lengths, ddof=1)
-    #             elif memory_type == "knn_classifier":
-    #                 reprs_path = get_config_value(exp_dir, "representatives_path")
-    #                 if reprs_path is not None:
-    #                     reprs_path = reprs_path.strip()
-    #                     while reprs_path[0] == "'" or reprs_path[0] == '"':
-    #                         reprs_path = reprs_path[1:-1]
-    #                     if reprs_path not in classifier_data_sizes:
-    #                         _, train_values, _, _, _, _ = load_data([reprs_path], ["actions_gr"])
-    #                         train_actions = np.array(train_values[0]["actions_gr"])
-    #                         n_reprs_mean = train_actions.shape[0] * train_actions.shape[1]
-    #                         classifier_data_sizes[reprs_path] = n_reprs_mean
-    #                     else:
-    #                         n_reprs_mean = classifier_data_sizes[reprs_path]
-    #                     n_reprs_std = 0
-    #             elif memory_type == "centroids":
-    #                 if centroids_exp_dir is None:
-    #                     n_reprs_mean = len(classes)
-    #                     n_reprs_std = 0
-    #                 else:
-    #                     exp_data = load_representatives_experiment(centroids_exp_dir)
-    #                     n_reprs_list = [r['metrics']['num_reprs'] for r in exp_data['results']]
-    #                     n_reprs_mean = np.mean(n_reprs_list)
-    #                     n_reprs_std = np.std(n_reprs_list, ddof=1)
-    #             elif memory_type == "cluster":
-    #                 memory_size = get_config_value(exp_dir, "memory_size")
-    #                 if memory_size is not None:
-    #                     n_reprs_mean = int(memory_size)
-    #                     n_reprs_std = 0
-    #     except Exception as e:
-    #         pass
-    #
-    #     print(f"fraction of exchange iterations done: {msg_frac:.3f}")
-    #     print(f"fraction of actual exchanges done: {msg_frac_actual:.3f}")
-    #     print(f"horizon lengths distribution: {Counter(msgs.max(axis=1))}")
-    #     print(f"mean phi (no memory):          {phi_nomem.mean():.3f} ± {phi_nomem.std(ddof=1):.3f}")
-    #     print(f"mean phi ({exp_name}): {phi.mean():.3f} ± {phi.std(ddof=1):.3f}")
-    #     print(f"mean phi (solver):             {phi_opt.mean():.3f} ± {phi_opt.std(ddof=1):.3f}")
-    #     print(f"mean phi (ECMP):               {phi_ecmp.mean():.3f} ± {phi_ecmp.std(ddof=1):.3f}")
-    #     print(f"mean phi position between ECMP and solver (no memory):          {phi_comparisons_nomem.mean():.3f} ± {phi_comparisons_nomem.std(ddof=1):.3f}")
-    #     print(f"mean phi position between ECMP and solver ({exp_name}): {phi_comparisons.mean():.3f} ± {phi_comparisons.std(ddof=1):.3f}")
-    #     print(f"all iterations: mean agent accuracy = {accuracy:.4f}, mean agent coverage = {coverage:.4f}")
-    #     for i in range(n_msg_iter):
-    #         print(f"iteration {i}: mean agent accuracy = {accuracy_stats[i]:.4f}, mean agent coverage = {coverage_stats[i]:.4f}")
-    #     print(f"fraction of ReadOut NN usage = {coverage_stats[n_msg_iter]:.4f}")
-    #     print(f"mean n_representatives = {n_reprs_mean:.0f} ± {n_reprs_std:.0f}")
-    #     acc_table_rows.append([exp_name, msg_frac, msg_frac_actual, accuracy, coverage] +
-    #         [accuracy_stats[i] for i in range(n_msg_iter)] +
-    #         [coverage_stats[i] for i in range(n_msg_iter)] +
-    #         [n_reprs_mean, n_reprs_std])
-    #
-    # columns = [
-    #     "classifier",
-    #     "fraction of exchange iterations done",
-    #     "fraction of exchanges done",
-    #     "accuracy",
-    #     "coverage",
-    # ] + [f"accuracy (it.{i})" for i in range(n_msg_iter)] + [f"coverage (it.{i})" for i in range(n_msg_iter)] + [
-    #     "representatives (mean)",
-    #     "representatives (std)",
-    # ]
-    #
-    # df = pd.DataFrame(acc_table_rows, columns=columns)
-    # out_filename_table = f"{out_filename_prefix}_table.csv"
-    # df.to_csv(out_filename_table)
-    # print(f"saved table to {out_filename_table}")

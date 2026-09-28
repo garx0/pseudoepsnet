@@ -12,6 +12,75 @@ import networkx as nx
 import argparse
 plt.rcParams.update({'font.size': 9})
 
+ALGORITHM_COLORS = {
+    "PεN":        "#1f77b4",   # blue
+    "Centroids":  "#2ca02c",   # green
+    "k-NN":       "#d62728",   # red
+    "SAMAROH-2L": "#9467bd",   # purple
+}
+SPECIAL_COLORS = {
+    "solver":    "#000000",
+    "no memory": "#8B4513",   # saddle brown
+    "ECMP":      "#ff7f0e",
+}
+
+def algorithm_of(name):
+    """Return algorithm key based on prefix of the display name, or None."""
+    for alg in sorted(ALGORITHM_COLORS, key=len, reverse=True):
+        if name.startswith(alg):
+            return alg
+    return None
+
+def color_for(name):
+    """Color for a given display name (algorithm family or special)."""
+    if name in SPECIAL_COLORS:
+        return SPECIAL_COLORS[name]
+    alg = algorithm_of(name)
+    return ALGORITHM_COLORS.get(alg, "#333333")
+
+def _set_box_color(artist, color):
+    """Устанавливает цвет для artist (поддерживает и Line2D, и PathPatch)."""
+    if hasattr(artist, "set_edgecolor"):
+        artist.set_edgecolor(color)
+    if hasattr(artist, "set_facecolor"):
+        artist.set_facecolor(color)
+    if hasattr(artist, "set_color"):
+        artist.set_color(color)
+    if hasattr(artist, "set_alpha"):
+        artist.set_alpha(0.75)
+
+def style_boxplot(bp, labels, ax=None):
+    """Color boxes, whiskers, caps, medians, fliers and tick labels per label."""
+    ax = ax if ax is not None else plt.gca()
+    colors = [color_for(l) for l in labels]
+    for i, color in enumerate(colors):
+        # box
+        _set_box_color(bp['boxes'][i], color)
+        # whiskers
+        for w in (bp['whiskers'][2*i], bp['whiskers'][2*i+1]):
+            if hasattr(w, "set_color"):
+                w.set_color(color)
+        # caps
+        for c in (bp['caps'][2*i], bp['caps'][2*i+1]):
+            if hasattr(c, "set_color"):
+                c.set_color(color)
+        # median
+        med = bp['medians'][i]
+        if hasattr(med, "set_color"):
+            med.set_color(color)
+        if hasattr(med, "set_linewidth"):
+            med.set_linewidth(2.2)
+        # fliers
+        fl = bp['fliers'][i]
+        if hasattr(fl, "set_markerfacecolor"):
+            fl.set_markerfacecolor(color)
+        if hasattr(fl, "set_markeredgecolor"):
+            fl.set_markeredgecolor(color)
+    # tick label colors
+    for tick, color in zip(ax.get_xticklabels(), colors):
+        tick.set_color(color)
+        tick.set_fontweight('bold')
+
 class ResultFolder:
     def __init__(self, path, parameter_name='phi_values'):
         self._folder_path = path
@@ -449,15 +518,17 @@ if __name__ == "__main__":
     else:
         median_fontsize = 6.5
 
+    labels1 = ["solver", "no memory"] + exp_names + ["ECMP"]
     plt.figure(figsize=(10,5), dpi=300)
-    bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], tick_labels=["solver", "no memory"] + exp_names + ["ECMP"],
+    bp = plt.boxplot([phi_opt, phi_nomem] + phi_arrays + [phi_ecmp], labels=labels1,
                     flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
+    style_boxplot(bp, labels1)
     medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
     for i, median in enumerate(medians, start=1):
-        plt.text(i, median, f'{median:.3f}', size=median_fontsize,
-                 ha='center', va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.5)
-             )
+        plt.annotate(f'{median:.3f}', xy=(i, median), xytext=(0, 4),
+             textcoords='offset points',
+             ha='center', va='bottom', color='black', size=median_fontsize,
+             bbox=dict(facecolor='white', edgecolor='none', alpha=0.5, boxstyle='square,pad=0.05'))
     plt.xticks(rotation=45, ha='right')
     plt.ylabel("phi")
     plt.grid()
@@ -466,15 +537,17 @@ if __name__ == "__main__":
     print(f"saved phi plot to {out_filename_plot1}.png")
     plt.close()
 
+    labels2 = ["no memory"] + exp_names
     plt.figure(figsize=(10,5), dpi=300)
-    bp = plt.boxplot([phi_comparisons_nomem] + phi_comparison_arrays, tick_labels=["no memory"] + exp_names,
+    bp = plt.boxplot([phi_comparisons_nomem] + phi_comparison_arrays, labels=labels2,
                     flierprops=dict(markersize=2, markeredgecolor=None, marker='o', markeredgewidth=0.5, markerfacecolor='white'))
+    style_boxplot(bp, labels2)
     medians = [bp['medians'][i].get_ydata()[0] for i in range(len(bp['medians']))]
     for i, median in enumerate(medians, start=1):
-        plt.text(i, median, f'{median:.3f}', size=median_fontsize,
-                 ha='right', va='bottom',
-                 bbox=dict(facecolor='white', edgecolor='none', alpha=0.7)
-             )
+        plt.annotate(f'{median:.3f}', xy=(i, median), xytext=(0, 4),
+             textcoords='offset points',
+             ha='right', va='bottom', color='black', size=median_fontsize,
+             bbox=dict(facecolor='white', edgecolor='none', alpha=0.7, boxstyle='square,pad=0.05'))
     plt.xticks(rotation=45, ha='right')
     plt.ylabel("phi position (solver—ECMP)")
     plt.ylim(0, 2)
